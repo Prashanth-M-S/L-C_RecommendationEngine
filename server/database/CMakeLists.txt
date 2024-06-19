@@ -1,7 +1,6 @@
-add_library(database SHARED
-    src/src/menuDatabase.cpp
+add_library(database
+    src/databaseController.cpp
 )
 
-target_include_directories(database PUBLIC src/inc)
-include_directories(pub)
+target_include_directories(database PUBLIC inc)
 link_libraries(database PUBLIC mysqlcppconn)
