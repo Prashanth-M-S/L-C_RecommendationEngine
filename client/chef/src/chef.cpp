@@ -1,4 +1,5 @@
 #include "chef.h"
+#include <iomanip>
 
 Chef::Chef(int id, const std::string &password, ServerConnection &serverConnection)
     : id(id), password(password), role("chef"), serverConnection(serverConnection)
@@ -12,11 +13,11 @@ void Chef::mainMenu()
     int choice;
     do
     {
-        std::cout << "\n\n1. Fetch Recommended Food\n";
+        std::cout << "---------Main Menu---------\n";
+        std::cout << "\n1. Fetch Recommended Food\n";
         std::cout << "2. Rollout Menu\n";
         std::cout << "3. View Current Menu\n";
         std::cout << "4. Logout\n\n";
-        std::cout << "Enter your choice: ";
         choice = userInputHandler->getIntInput("Enter your choice: ");
 
         switch (choice)
@@ -59,15 +60,25 @@ void Chef::fetchRecommendedFood()
 
     if (status == "STATUS_OK")
     {
-        std::cout << "Recommended food:\n";
+        std::cout << "-----Recommended food------\n";
+        std::cout << "-------------------------------------------------\n";
+        std::cout << "| ID   | Name            | Price  | Rating      |\n";
+        std::cout << "-------------------------------------------------\n";
+
         for (const auto &menu : recommendedFood)
         {
-            std::cout << "ID: " << menu.menuId << ", Name: " << menu.menuName << ", Price: " << menu.price << "\n\n";
+            std::cout << "| "
+                      << std::setw(4) << menu.menuId << " | "
+                      << std::setw(15) << std::left << menu.menuName.substr(0, 14) << " | "
+                      << std::setw(6) << std::fixed << std::setprecision(2) << menu.price << " | "
+                      << std::setw(10) << std::fixed << std::setprecision(2) << menu.recommendationScore << " |\n";
         }
+
+        std::cout << "-------------------------------------------------\n";
     }
     else
     {
-        std::cout << "Failed to get the food item " << status << "\n";
+        std::cout << "Failed to get the food items: " << status << "\n";
     }
 }
 

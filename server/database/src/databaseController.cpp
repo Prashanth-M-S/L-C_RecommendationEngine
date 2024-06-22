@@ -17,7 +17,6 @@ void DatabaseController::connect()
 {
     try
     {
-
         sql::mysql::MySQL_Driver *driver = sql::mysql::get_mysql_driver_instance();
         connection.reset(driver->connect(dbHost, user, password));
         connection->setSchema(database);
@@ -34,15 +33,15 @@ std::vector<Menu> DatabaseController::fetchMenus()
     std::vector<Menu> menus;
     try
     {
-        std::unique_ptr<sql::Statement> stmt(connection->createStatement());
-        std::unique_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT menuId, menu_name, price FROM menu"));
+        std::unique_ptr<sql::Statement> statement(connection->createStatement());
+        std::unique_ptr<sql::ResultSet> resultSet(statement->executeQuery("SELECT menuId, menu_name, price FROM menu"));
 
-        while (res->next())
+        while (resultSet->next())
         {
             Menu menu;
-            menu.menuId = res->getInt("menuId");
-            menu.menuName = res->getString("menu_name");
-            menu.price = res->getDouble("price");
+            menu.menuId = resultSet->getInt("menuId");
+            menu.menuName = resultSet->getString("menu_name");
+            menu.price = resultSet->getDouble("price");
             menus.push_back(menu);
         }
     }
@@ -72,17 +71,17 @@ void DatabaseController::fetchFeedbacks(Menu &menu)
     {
         std::unique_ptr<sql::PreparedStatement> preparedStatement(connection->prepareStatement("SELECT feedback_Id, menuId, userId, rating, comment, feedback_date FROM feedback WHERE menuId = ?"));
         preparedStatement->setInt(1, menu.menuId);
-        std::unique_ptr<sql::ResultSet> res(preparedStatement->executeQuery());
+        std::unique_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
 
-        while (res->next())
+        while (resultSet->next())
         {
             Feedback feedback;
-            feedback.feedbackId = res->getInt("feedback_Id");
-            feedback.menuId = res->getInt("menuId");
-            feedback.userId = res->getInt("userId");
-            feedback.rating = res->getDouble("rating");
-            feedback.comment = res->getString("comment");
-            feedback.feedbackDate = res->getString("feedback_date");
+            feedback.feedbackId = resultSet->getInt("feedback_Id");
+            feedback.menuId = resultSet->getInt("menuId");
+            feedback.userId = resultSet->getInt("userId");
+            feedback.rating = resultSet->getDouble("rating");
+            feedback.comment = resultSet->getString("comment");
+            feedback.feedbackDate = resultSet->getString("feedback_date");
             menu.feedbacks.push_back(feedback);
         }
     }
@@ -92,28 +91,27 @@ void DatabaseController::fetchFeedbacks(Menu &menu)
     }
 }
 
-bool DatabaseController::authenticateUser(int userId, const std::string &password)
+std::string DatabaseController::authenticateUser(int userId, const std::string &password)
 {
     try
     {
-        printf("DatabaseController::authenticateUser entry with userId %d, password %s\n", userId, password.c_str());
-        std::unique_ptr<sql::PreparedStatement> preparedStatement(connection->prepareStatement("SELECT COUNT(*) AS count FROM users WHERE userId = ? AND password = ?"));
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(connection->prepareStatement(
+            "SELECT role FROM users WHERE userId = ? AND password = ?"));
         preparedStatement->setInt(1, userId);
         preparedStatement->setString(2, password);
-        std::unique_ptr<sql::ResultSet> res(preparedStatement->executeQuery());
+        std::unique_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
 
-        if (res->next())
+        if (resultSet->next())
         {
-            int count = res->getInt("count");
-            return (count == 1);
+            std::string role = resultSet->getString("role");
+            return "STATUS_OK," + role;
         }
     }
     catch (sql::SQLException &e)
     {
         printf("DatabaseController::authenticateUser() SQLException: %s\n", e.what());
     }
-
-    return false;
+    return "ATHENTICATION_FAILURE";
 }
 
 bool DatabaseController::addUser(const User &user)
@@ -127,10 +125,8 @@ bool DatabaseController::addUser(const User &user)
         preparedStatement->setString(4, user.password);
 
         int rowsAffected = preparedStatement->executeUpdate();
-        if (rowsAffected == 1)
-        {
-            return true;
-        }
+
+        return rowsAffected == 1;
     }
     catch (sql::SQLException &e)
     {
@@ -148,14 +144,51 @@ bool DatabaseController::deleteUser(int userId)
         preparedStatement->setInt(1, userId);
 
         int rowsAffected = preparedStatement->executeUpdate();
-        if (rowsAffected == 1)
-        {
-            return true;
-        }
+
+        return rowsAffected == 1;
     }
     catch (sql::SQLException &e)
     {
         std::cerr << "DatabaseController::deleteUser() SQLException: " << e.what() << "\n";
+    }
+
+    return false;
+}
+
+bool DatabaseController::addMenu(const MenuData &menu)
+{
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement("INSERT INTO menu (menu_name, price) VALUES (?, ?)"));
+        preparedStatement->setString(1, menu.menuName);
+        preparedStatement->setDouble(2, menu.price);
+        int rowsAffected = preparedStatement->executeUpdate();
+
+        return rowsAffected == 1;
+    }
+    catch (sql::SQLException &e)
+    {
+        printf("DatabaseController::addMenu() SQLException: %s\n", e.what());
+    }
+
+    return false;
+}
+
+bool DatabaseController::deleteMenu(int menuId)
+{
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement("DELETE FROM menu WHERE menuId = ?"));
+        preparedStatement->setInt(1, menuId);
+
+        int rowsAffected = preparedStatement->executeUpdate();
+        return rowsAffected == 1;
+    }
+    catch (sql::SQLException &e)
+    {
+        printf("DatabaseController::deleteMenu() SQLException: %s\n", e.what());
     }
 
     return false;

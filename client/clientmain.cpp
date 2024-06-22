@@ -19,11 +19,12 @@ void printMainMenu()
   |                                                  |
   |                  Cafeteria                       |
   |__________________________________________________|
-)" << "\033[0m" << std::endl;
+)" << "\033[0m"
+              << std::endl;
     std::cout << "Main Menu:\n";
     std::cout << "1. Admin Login\n";
     std::cout << "2. Chef Login\n";
-    // std::cout << "2. User Login\n";
+    std::cout << "3. Employee Login\n";
     std::cout << "4. Exit\n";
 }
 
@@ -35,7 +36,7 @@ int main()
     {
         if (!serverConnection.connectToServer())
         {
-            std::cout << "Failed to connect to server. trying to connect......" << std::endl;
+            std::cout << "Failed to connect to server. trying to reconnect......" << std::endl;
             sleep(2);
             system("clear");
             continue;
@@ -49,31 +50,37 @@ int main()
         {
             return 0;
         }
+
         int id = userInputHandler.getIntInput("enter your Id: ");
         std::string password = userInputHandler.getStringInput("enter your password: ");
-
-        if (!auth.authenticateUser(id, password))
-        {
-            std::cout << "\033[1;31m" << "\nAuthentication failed please check your password or ID\n" << "\033[0m" << "\n";
-            continue;
-        }
-        else
-        {
-            std::cout << "\033[1;32m" << "\nAuthentication successful\n" << "\033[0m" << "\n";
-        }
+        std::string role = auth.authenticateUser(id, password);
 
         switch (choice)
         {
         case 1:
         {
-            Admin admin(id, password, serverConnection);
-            admin.mainMenu();
+            if (role == "ADMIN")
+            {
+                Admin admin(id, password, serverConnection);
+                admin.mainMenu();
+            }
+            else
+            {
+                std::cout << "Admin athentication failed\n";
+            }
             break;
         }
         case 2:
         {
-            Chef chef(id, password, serverConnection);
-            chef.mainMenu();
+            if (role == "CHEF")
+            {
+                Chef chef(id, password, serverConnection);
+                chef.mainMenu();
+            }
+            else
+            {
+                std::cout << "Chef athentication failedn";
+            }
             break;
         }
         case 3:

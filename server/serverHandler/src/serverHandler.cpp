@@ -47,7 +47,7 @@ void serverHandler::bindSocket()
 
 void serverHandler::startListening()
 {
-    if (listen(server_fd, 3) < 0)
+    if (listen(server_fd, 5) < 0)
     {
         perror("Listen");
         exit(EXIT_FAILURE);
@@ -70,7 +70,6 @@ void serverHandler::start()
             perror("Accept");
             exit(EXIT_FAILURE);
         }
-
         std::thread handleClientThread(&serverHandler::handleClient, this, new_socket);
         handleClientThread.detach();
     }

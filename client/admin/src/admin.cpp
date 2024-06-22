@@ -17,13 +17,14 @@ void Admin::mainMenu()
     int choice;
     do
     {
-        std::cout << "\n-------Menu---------\n";
+        std::cout << "\n-------Main Menu---------\n";
         std::cout << "\n1. Add User\n";
         std::cout << "2. Delete User\n";
         std::cout << "3. Add Menu Item\n";
         std::cout << "4. Delete Menu Item\n";
-        std::cout << "5. Update Menu Item\n";
-        std::cout << "6. Logout\n\n";
+        std::cout << "5. view recommended Food\n";
+        std::cout << "6. View all Menu Items\n";
+        std::cout << "7. Logout\n\n";
         choice = userInputHandler->getIntInput("Enter your choice: ");
 
         switch (choice)
@@ -41,11 +42,13 @@ void Admin::mainMenu()
             deleteMenu();
             break;
         case 5:
-            updateMenu();
+            viewAllMenu();
             break;
         case 6:
+            viewRecommendedmenu();
+        case 7:
             std::cout << "Logging out...\n";
-            break;
+            return;
         default:
             std::cout << "Invalid choice. Please try again.\n";
         }
@@ -101,15 +104,83 @@ void Admin::deleteUser()
 
 void Admin::addMenu()
 {
-    std::cout << "Adding a menu item...\n";
+    std::string menuName = userInputHandler->getStringInput("Enter menu name: ");
+    int menuprice = userInputHandler->getIntInput("Enter cost: ");
+
+    std::string request = "ADD_MENU," + menuName + "," + std::to_string(menuprice);
+
+    if (!serverConnection.connectToServer())
+    {
+        std::cerr << "Failed to connect to server." << std::endl;
+        return;
+    }
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Send request failed" << std::endl;
+        return;
+    }
+    std::string response = serverConnection.readResponse();
+    
+    std::cout << "Server response: " << response << std::endl;
 }
 
 void Admin::deleteMenu()
 {
-    std::cout << "Deleting a menu item...\n";
+    int menuid = userInputHandler->getIntInput("Enter menu ID to delete: ");
+    std::string request = "DELETE_MENU," + std::to_string(menuid);
+
+    if (!serverConnection.connectToServer())
+    {
+        std::cerr << "Failed to connect to server." << std::endl;
+        return;
+    }
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Send request failed" << std::endl;
+        return;
+    }
+    std::string response = serverConnection.readResponse();
+
+    std::cout << "server response: " << response << std::endl;
 }
 
-void Admin::updateMenu()
+
+
+void Admin::viewRecommendedmenu()
 {
-    std::cout << "Updating a menu item...\n";
+    if (!serverConnection.connectToServer())
+    {
+        std::cout << "Failed to connect to server." << std::endl;
+        return;
+    }
+
+    std::string request = "GET_RECOMMENDED_FOOD";
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Failed to send request to server." << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+    auto [status, recommendedFood] = dataParser->parseRecommendedFood(response);
+
+    if (status == "STATUS_OK")
+    {
+        std::cout << "Recommended food:\n";
+        for (const auto &menu : recommendedFood)
+        {
+            std::cout << "ID: " << menu.menuId << ", Name: " << menu.menuName << ", Price: " << menu.price << "\n\n";
+        }
+    }
+    else
+    {
+        std::cout << "Failed to get the food item " << status << "\n";
+    }
+}
+
+void Admin::viewAllMenu()
+{
+
 }

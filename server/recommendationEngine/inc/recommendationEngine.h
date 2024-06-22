@@ -10,7 +10,7 @@ class RecommendationEngine : public IRecommendationEngine
 {
 public:
     RecommendationEngine(std::shared_ptr<IDatabaseController> database):  database(database) {}
-    std::vector<Menu> getRecommendedFood() override;
+    std::vector<RecommendedMenuData> getRecommendedFood() override;
 
 private:
     float calculateSentimentScore(const std::string &feedback);

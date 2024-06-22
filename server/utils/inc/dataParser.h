@@ -22,7 +22,7 @@ class DataParser
 public:
     std::pair<bool, LoginRequest> deserializeLoginRequest(const std::string &request);
     std::pair<bool, GeneralRequest> deserializeRequest(const std::string &request);
-    std::pair<bool, std::string> deserializeFoodItem(const std::vector<Menu> &menus);
+    std::pair<bool, std::string> deserializeRecommendedMenuData(const std::vector<RecommendedMenuData> &menus);
     std::pair<bool, User> deserializeAddUserRequest(const std::string &data);
     std::pair<bool, std::vector<std::string>> deserializeData(const std::string &data);
 };

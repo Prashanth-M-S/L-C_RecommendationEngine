@@ -10,6 +10,7 @@
 #include <cppconn/statement.h>
 #include <cppconn/prepared_statement.h>
 #include <memory>
+#include "IDatabaseController.h"
 
 class DatabaseController : public IDatabaseController
 {
@@ -19,9 +20,11 @@ public:
     std::vector<Menu> fetchMenusWithFeedback() override;
     std::vector<Menu> fetchMenus() override;
     void fetchFeedbacks(Menu &menu);
-    bool authenticateUser(int userId, const std::string &password);
+    std::string authenticateUser(int userId, const std::string &password);
     bool addUser(const User &user);
     bool deleteUser(int userId);
+    bool addMenu(const MenuData& menu);
+    bool deleteMenu(int menuId);
 
 private:
     void connect();

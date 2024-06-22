@@ -1,33 +1,33 @@
 #include "authentication.h"
+#include "dataParser.h"
 #include <iostream>
 
 Authentication::Authentication(ServerConnection &serverConn) : serverConn(serverConn) {}
 
-bool Authentication::authenticateUser(int userId, const std::string &password)
+std::string Authentication::authenticateUser(int userId, const std::string &password)
 {
+    std::string role;
     std::string loginRequest = "LOGIN," + std::to_string(userId) + "," + password;
 
-    int sock = serverConn.getSocket();
-    if (sock == -1)
+    if (!serverConn.connectToServer())
     {
-        std::cout << "Server connection is not established.\n";
-        return false;
+        std::cout << "Failed to connect to server." << std::endl;
+        role = "";
     }
 
-    if (send(sock, loginRequest.c_str(), loginRequest.size(), 0) < 0)
+    if (!serverConn.sendRequest(loginRequest))
     {
-        perror("Send failed");
-        return false;
+        std::cout << "Send request failed" << std::endl;
+        role = "";
     }
 
-    char buffer[256];
-    if (recv(sock, buffer, sizeof(buffer), 0) < 0)
+    std::string response = serverConn.readResponse();
+    DataParser dataparser;
+    std::pair<bool, std::vector<std::string>> data = dataparser.deserializeData(response);
+    if (data.second.at(0) == "STATUS_OK") 
     {
-        perror("Receive failed");
-        return false;
+        role = data.second.at(1);
     }
-
-    buffer[255] = '\0';
-
-    return std::string(buffer).find("status ok") != std::string::npos;
+    
+    return role;
 }

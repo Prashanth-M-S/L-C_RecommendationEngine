@@ -16,7 +16,6 @@ void RequestHandler::handleRequest(int new_socket)
         std::string request = readFromSocket(new_socket);
         if (request.empty())
         {
-            std::cerr << "handleRequest: Error reading from socket" << std::endl;
             return;
         }
 
@@ -75,6 +74,14 @@ std::string RequestHandler::processRequest(const GeneralRequest &request)
     {
         return handleDelUserRequest(request.requestData);
     }
+    else if (request.requestType == "ADD_MENU")
+    {
+        return handleAddMenuRequest(request.requestData);
+    }
+    else if (request.requestType == "DELETE_MENU")
+    {
+        return handleDelMenuRequest(request.requestData);
+    }
 
     return "UNKNOWN_REQUEST";
 }
@@ -85,33 +92,25 @@ std::string RequestHandler::handleLoginRequest(const std::string &data)
 
     if (loginParam.first)
     {
-        if (database->authenticateUser(loginParam.second.userId, loginParam.second.password))
-        {
-            return "status ok";
-        }
-        else
-        {
-            return "authentication failed";
-        }
+        return database->authenticateUser(loginParam.second.userId, loginParam.second.password);
     }
     else
     {
-        return "invalid request format";
+        return "INVALID_PARAMETER";
     }
 }
 
 std::string RequestHandler::handleGetRecommendedFoodRequest()
 {
-    std::vector<Menu> recommendedFood = recommendationEngine->getRecommendedFood();
+    std::vector<RecommendedMenuData> recommendedFood = recommendationEngine->getRecommendedFood();
 
     if (recommendedFood.empty())
     {
         return "STATUS_NO_RECOMMENDATIONS";
     }
 
-    std::pair<bool, std::string> parseData = dataParser->deserializeFoodItem(recommendedFood);
+    std::pair<bool, std::string> parseData = dataParser->deserializeRecommendedMenuData(recommendedFood);
 
-    std::cout << "handleGetRecommendedFoodRequest: " << parseData.second << "\n";
     if (parseData.first)
     {
         return "STATUS_OK," + parseData.second;
@@ -182,3 +181,40 @@ std::string RequestHandler::handleDelUserRequest(const std::string &data)
         return "STATUS_ERROR,Invalid request format";
     }
 }
+
+std::string RequestHandler::handleAddMenuRequest(const std::string &data)
+{
+    std::pair<bool, std::vector<std::string>> addMenuParam = dataParser->deserializeData(data);
+    MenuData menuData;
+
+    menuData.menuName = addMenuParam.second.at(0);
+    menuData.price = std::stod(addMenuParam.second.at(1));
+
+
+    if (addMenuParam.first)
+    {
+        if (database->addMenu(menuData))
+        {
+            return "STATUS_OK,Menu added successfully";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to add menu";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handleDelMenuRequest(const std::string &data)
+{
+    int menuId = std::stoi(data);
+    if (database->deleteMenu(menuId))
+    {
+        return "STATUS_OK,Menu deleted successfully";
+    }
+
+    return "STATUS_ERROR,Failed to delete menu";
+};

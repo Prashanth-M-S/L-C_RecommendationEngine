@@ -4,10 +4,10 @@
 #include <algorithm>
 #include <sstream>
 
-std::vector<Menu> RecommendationEngine::getRecommendedFood()
+std::vector<RecommendedMenuData> RecommendationEngine::getRecommendedFood()
 {
+    std::vector<RecommendedMenuData> recommendedMenus;
     std::vector<Menu> menus = database->fetchMenusWithFeedback();
-    std::vector<Menu> recommendedMenus;
 
     for (auto &menu : menus)
     {
@@ -22,12 +22,10 @@ std::vector<Menu> RecommendationEngine::getRecommendedFood()
         }
 
         float averageRating = feedbackCount ? totalRating / feedbackCount : 0;
-        float averageSentimentScore = feedbackCount ? totalSentimentScore / feedbackCount : 0;
+        float averageSentimentScore = totalSentimentScore ? totalSentimentScore / feedbackCount : 0;
+        float recommendationScore = averageRating + averageSentimentScore;
 
-        if (averageRating > 3.5 && averageSentimentScore > 0.5)
-        {
-            recommendedMenus.push_back(menu);
-        }
+        recommendedMenus.push_back(RecommendedMenuData(menu.menuId, menu.menuName, menu.price, recommendationScore));
     }
 
     return recommendedMenus;

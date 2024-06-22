@@ -4,6 +4,21 @@
 #include <string>
 #include <vector>
 
+struct MenuData
+{
+    int menuId;
+    std::string menuName;
+    float price;
+};
+
+struct RecommendedMenuData : public MenuData
+{
+    float recommendationScore;
+
+    RecommendedMenuData(int id, const std::string &name, float p, float score)
+        : MenuData{id, name, p}, recommendationScore{score} {}
+};
+
 struct Feedback
 {
     int feedbackId;

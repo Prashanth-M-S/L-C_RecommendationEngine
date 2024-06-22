@@ -9,7 +9,7 @@ class IRecommendationEngine
 {
 public:
     virtual ~IRecommendationEngine() {}
-    virtual std::vector<Menu> getRecommendedFood() = 0;
+    virtual std::vector<RecommendedMenuData> getRecommendedFood() = 0;
 };
 
 #endif

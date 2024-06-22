@@ -26,7 +26,8 @@ private:
     void deleteUser();
     void addMenu();
     void deleteMenu();
-    void updateMenu();
+    void viewRecommendedmenu();
+    void viewAllMenu();
 };
 
 #endif

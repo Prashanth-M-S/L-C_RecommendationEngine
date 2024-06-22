@@ -8,7 +8,8 @@
 class DataParser
 {
 public:
-    std::pair<std::string, std::vector<Menu>> parseRecommendedFood(const std::string &data);
+    std::pair<std::string, std::vector<RecommendedMenuData>> parseRecommendedFood(const std::string &data);
+    std::pair<bool, std::vector<std::string>> deserializeData(const std::string &data);
 };
 
 #endif

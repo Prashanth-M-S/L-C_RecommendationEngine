@@ -48,13 +48,13 @@ std::pair<bool, GeneralRequest> DataParser::deserializeRequest(const std::string
     }
 }
 
-std::pair<bool, std::string> DataParser::deserializeFoodItem(const std::vector<Menu> &menus)
+std::pair<bool, std::string> DataParser::deserializeRecommendedMenuData(const std::vector<RecommendedMenuData> &menus)
 {
     std::string foodParameter;
 
     for (const auto &menu : menus)
     {
-        foodParameter += std::to_string(menu.menuId) + "," + menu.menuName + "," + std::to_string(menu.price);
+        foodParameter += std::to_string(menu.menuId) + "," + menu.menuName + "," + std::to_string(menu.price) + "," + std::to_string(menu.recommendationScore) + ",";
     }
 
     return std::make_pair(true, foodParameter);

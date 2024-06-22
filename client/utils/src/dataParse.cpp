@@ -2,15 +2,13 @@
 #include <sstream>
 #include <iostream>
 
-std::pair<std::string, std::vector<Menu>> DataParser::parseRecommendedFood(const std::string &data)
+std::pair<std::string, std::vector<RecommendedMenuData>> DataParser::parseRecommendedFood(const std::string &data)
 {
-    std::cout << "parseRecommendedFood: " << data << std::endl;
-
     std::istringstream iss(data);
     std::string statusCode;
     std::getline(iss, statusCode, ',');
 
-    std::vector<Menu> recommendedFood;
+    std::vector<RecommendedMenuData> recommendedFood;
     std::string menuData;
 
     while (std::getline(iss, menuData, ','))
@@ -33,7 +31,15 @@ std::pair<std::string, std::vector<Menu>> DataParser::parseRecommendedFood(const
 
             float price = std::stof(priceStr);
 
-            recommendedFood.push_back({menuId, menuName, price});
+            std::string recommendationScoreStr;
+            if (!std::getline(iss, recommendationScoreStr, ','))
+            {
+                throw std::runtime_error("Missing recommendation score");
+            }
+
+            float recommendationScore = std::stof(recommendationScoreStr);
+
+            recommendedFood.push_back({menuId, menuName, price, recommendationScore});
         }
         catch (const std::exception &e)
         {
@@ -43,4 +49,18 @@ std::pair<std::string, std::vector<Menu>> DataParser::parseRecommendedFood(const
     }
 
     return {statusCode, recommendedFood};
+}
+
+std::pair<bool, std::vector<std::string>> DataParser::deserializeData(const std::string &data)
+{
+    std::istringstream iss(data);
+    std::string item;
+    std::vector<std::string> tokens;
+
+    while (getline(iss, item, ','))
+    {
+        tokens.push_back(item);
+    }
+
+    return {true, tokens};
 }

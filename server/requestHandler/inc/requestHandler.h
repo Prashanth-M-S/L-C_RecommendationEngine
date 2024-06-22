@@ -24,6 +24,8 @@ private:
     std::string handleGetRecommendedFoodRequest();
     std::string handleAddUserRequest(const std::string &data);
     std::string handleDelUserRequest(const std::string &data);
+    std::string handleAddMenuRequest(const std::string &data);
+    std::string handleDelMenuRequest(const std::string &data);
 };
 
 #endif 
