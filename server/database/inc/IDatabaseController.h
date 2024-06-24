@@ -16,6 +16,7 @@ public:
     virtual bool deleteUser(int userId) = 0;
     virtual bool addMenu(const MenuData& menu) = 0;
     virtual bool deleteMenu(int menuId) = 0;
+    virtual bool addMenusToRollout(const std::vector<int> &menuIds) = 0;
 };
 
 #endif

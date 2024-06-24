@@ -193,3 +193,26 @@ bool DatabaseController::deleteMenu(int menuId)
 
     return false;
 }
+
+bool DatabaseController::addMenusToRollout(const std::vector<int> &menuIds)
+{
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement("INSERT INTO rollout (menuDate, menuId) VALUES (CURDATE(), ?)"));
+
+        for (const auto &menuId : menuIds)
+        {
+            preparedStatement->setInt(1, menuId);
+            preparedStatement->executeUpdate();
+        }
+
+        return true;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "DatabaseController::addMenusToRollout() SQLException: " << e.what() << "\n";
+    }
+
+    return false;
+}
