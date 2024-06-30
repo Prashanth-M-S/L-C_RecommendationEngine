@@ -25,7 +25,7 @@ public:
     bool deleteUser(int userId);
     bool addMenu(const MenuData& menu);
     bool deleteMenu(int menuId);
-    bool addMenusToRollout(const std::vector<int> &menuIds);
+    bool insertDailyMenuEntries(const std::vector<DailyMenuEntry> &dailyMenuEntry);
 
 private:
     void connect();

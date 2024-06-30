@@ -194,16 +194,18 @@ bool DatabaseController::deleteMenu(int menuId)
     return false;
 }
 
-bool DatabaseController::addMenusToRollout(const std::vector<int> &menuIds)
+bool DatabaseController::insertDailyMenuEntries(const std::vector<DailyMenuEntry> &dailyMenuEntry) 
 {
     try
     {
         std::unique_ptr<sql::PreparedStatement> preparedStatement(
-            connection->prepareStatement("INSERT INTO rollout (menuDate, menuId) VALUES (CURDATE(), ?)"));
+            connection->prepareStatement("INSERT INTO dailyMenu (menuId, availability, mealCategory, menuDate) VALUES (?, ?, ?, CURDATE())"));
 
-        for (const auto &menuId : menuIds)
+        for (const auto& entry : dailyMenuEntry)
         {
-            preparedStatement->setInt(1, menuId);
+            preparedStatement->setInt(1, entry.menuId);
+            preparedStatement->setInt(2, entry.availability);
+            preparedStatement->setString(3, entry.mealCategory);
             preparedStatement->executeUpdate();
         }
 
@@ -211,7 +213,7 @@ bool DatabaseController::addMenusToRollout(const std::vector<int> &menuIds)
     }
     catch (sql::SQLException &e)
     {
-        std::cerr << "DatabaseController::addMenusToRollout() SQLException: " << e.what() << "\n";
+        std::cerr << "DatabaseController::insertDailyMenuEntries() SQLException: " << e.what() << "\n";
     }
 
     return false;

@@ -84,7 +84,23 @@ void Chef::fetchRecommendedFood()
 
 void Chef::rolloutMenu()
 {
-    std::cout << "Rolling out a menu...\n";
+    fetchRecommendedFood();
+
+    int menuId = userInputHandler->getIntInput("Enter menu ID to roll out: ");
+    int available = 1;
+    std::string category = userInputHandler->getStringInput("Enter category: ");
+
+    std::string request = "ROLLOUT_MENU," + std::to_string(menuId) + "," + std::to_string(available) + "," + category;
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Failed to send request to server." << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+
+    std::cout << response << std::endl;
 }
 
 void Chef::viewMenu()

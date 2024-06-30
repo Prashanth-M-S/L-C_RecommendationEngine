@@ -48,4 +48,11 @@ struct User
         : userId(id), username(name), password(password), role(roll) {}
 };
 
+struct DailyMenuEntry
+{
+    int menuId;
+    int availability;
+    std::string mealCategory;
+};
+
 #endif

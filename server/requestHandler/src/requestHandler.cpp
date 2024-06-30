@@ -82,6 +82,10 @@ std::string RequestHandler::processRequest(const GeneralRequest &request)
     {
         return handleDelMenuRequest(request.requestData);
     }
+    else if (request.requestType == "ROLLOUT_MENU")
+    {
+        return handleAddDailyMenuItemRequest(request.requestData);
+    }
 
     return "UNKNOWN_REQUEST";
 }
@@ -218,3 +222,29 @@ std::string RequestHandler::handleDelMenuRequest(const std::string &data)
 
     return "STATUS_ERROR,Failed to delete menu";
 };
+
+std::string RequestHandler::handleAddDailyMenuItemRequest(const std::string &data)
+{
+    std::pair<bool, std::vector<std::string>> addDailyMenuItemParam = dataParser->deserializeData(data);
+    DailyMenuEntry dailyMenuEntry;
+
+    dailyMenuEntry.menuId  = std::stoi(addDailyMenuItemParam.second.at(0));
+    dailyMenuEntry.availability = std::stoi(addDailyMenuItemParam.second.at(1));
+    dailyMenuEntry.mealCategory = addDailyMenuItemParam.second.at(2);
+
+    if (addDailyMenuItemParam.first)
+    {
+        if (database->insertDailyMenuEntries({dailyMenuEntry}))
+        {
+            return "STATUS_OK,Daily menu item added successfully";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to add daily menu item";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
