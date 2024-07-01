@@ -8,6 +8,7 @@
 #include "authentication.h"
 #include "chef.h"
 #include "admin.h"
+#include "employee.h"
 
 #define SERVER_PORT 1234
 #define SERVER_IP "127.0.0.1"
@@ -85,6 +86,15 @@ int main()
         }
         case 3:
         {
+            if (role == "EMPLOYEE")
+            {
+                Employee employee(id, password, serverConnection);
+                employee.mainMenu();
+            }
+            else
+            {
+                std::cout << "Chef athentication failedn";
+            }
             break;
         }
         default:

@@ -194,14 +194,14 @@ bool DatabaseController::deleteMenu(int menuId)
     return false;
 }
 
-bool DatabaseController::insertDailyMenuEntries(const std::vector<DailyMenuEntry> &dailyMenuEntry) 
+bool DatabaseController::insertDailyMenuEntries(const std::vector<DailyMenuEntry> &dailyMenuEntry)
 {
     try
     {
         std::unique_ptr<sql::PreparedStatement> preparedStatement(
             connection->prepareStatement("INSERT INTO dailyMenu (menuId, availability, mealCategory, menuDate) VALUES (?, ?, ?, CURDATE())"));
 
-        for (const auto& entry : dailyMenuEntry)
+        for (const auto &entry : dailyMenuEntry)
         {
             preparedStatement->setInt(1, entry.menuId);
             preparedStatement->setInt(2, entry.availability);
@@ -217,4 +217,38 @@ bool DatabaseController::insertDailyMenuEntries(const std::vector<DailyMenuEntry
     }
 
     return false;
+}
+
+std::vector<GetDailyMenu> DatabaseController::getDailyMenu()
+{
+    std::vector<GetDailyMenu> dailyMenu;
+
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement(
+                "SELECT dm.dailyMenuId, m.menu_name AS itemName, dm.availability, dm.mealCategory, m.price "
+                "FROM dailyMenu dm "
+                "JOIN menu m ON dm.menuId = m.menuId "
+                "WHERE dm.menuDate = CURDATE()"));
+
+        std::unique_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
+
+        while (resultSet->next())
+        {
+            GetDailyMenu entry;
+            entry.dailyMenuId = resultSet->getInt("dailyMenuId");
+            entry.itemName = resultSet->getString("itemName");
+            entry.availability = resultSet->getInt("availability");
+            entry.mealCategory = resultSet->getString("mealCategory");
+            entry.price = resultSet->getDouble("price");
+            dailyMenu.push_back(entry);
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "DatabaseController::getDailyMenu() SQLException: " << e.what() << "\n";
+    }
+
+    return dailyMenu;
 }

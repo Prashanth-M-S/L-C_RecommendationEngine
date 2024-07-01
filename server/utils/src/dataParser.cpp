@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iostream>
 #include <utility>
+#include <iomanip>
 
 std::pair<bool, LoginRequest> DataParser::deserializeLoginRequest(const std::string &request)
 {
@@ -87,4 +88,26 @@ std::pair<bool, std::vector<std::string>> DataParser::deserializeData(const std:
     }
 
     return {true, tokens};
+}
+
+std::string DataParser::serializeData(const std::vector<GetDailyMenu> &items)
+{
+    std::ostringstream oss;
+
+    for (const auto &item : items)
+    {
+        oss << item.dailyMenuId << ","
+            << item.itemName << ","
+            << item.availability << ","
+            << item.mealCategory << ","
+            << std::fixed << std::setprecision(2) << item.price << ",";
+    }
+
+    std::string result = oss.str();
+    if (!result.empty())
+    {
+        result.pop_back();
+    }
+
+    return result;
 }

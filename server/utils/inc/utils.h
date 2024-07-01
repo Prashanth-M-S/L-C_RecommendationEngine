@@ -55,4 +55,14 @@ struct DailyMenuEntry
     std::string mealCategory;
 };
 
+class GetDailyMenu
+{
+public:
+    int dailyMenuId;
+    std::string itemName;
+    int availability;
+    std::string mealCategory;
+    double price;
+};
+
 #endif

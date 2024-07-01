@@ -26,6 +26,7 @@ public:
     bool addMenu(const MenuData& menu);
     bool deleteMenu(int menuId);
     bool insertDailyMenuEntries(const std::vector<DailyMenuEntry> &dailyMenuEntry);
+    std::vector<GetDailyMenu> getDailyMenu();
 
 private:
     void connect();

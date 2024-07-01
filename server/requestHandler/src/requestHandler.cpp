@@ -86,6 +86,10 @@ std::string RequestHandler::processRequest(const GeneralRequest &request)
     {
         return handleAddDailyMenuItemRequest(request.requestData);
     }
+    else if (request.requestType == "GET_DAILY_MENU")
+    {
+        return handleGetDailyMenuRequest(request.requestData);
+    }
 
     return "UNKNOWN_REQUEST";
 }
@@ -247,4 +251,16 @@ std::string RequestHandler::handleAddDailyMenuItemRequest(const std::string &dat
     {
         return "STATUS_ERROR,Invalid request format";
     }
+}
+
+std::string RequestHandler::handleGetDailyMenuRequest(const std::string &data)
+{
+    std::vector<GetDailyMenu> items = database->getDailyMenu();
+
+    if (items.empty())
+    {
+        return "STATUS_ERROR,NO_DAILY_MENU_ITEMS";
+    }
+
+    return "STATUS_OK," + dataParser->serializeData(items);
 }

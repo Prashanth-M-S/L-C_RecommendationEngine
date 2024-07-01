@@ -19,7 +19,6 @@ struct RecommendedMenuData : public MenuData
         : MenuData{id, name, p}, recommendationScore{score} {}
 };
 
-
 struct Feedback
 {
     int feedbackId;
@@ -36,6 +35,16 @@ struct Menu
     std::string menuName;
     float price;
     std::vector<Feedback> feedbacks;
+};
+
+class DailyMenuEntry
+{
+public:
+    int dailyMenuId;
+    std::string itemName;
+    int availability;
+    std::string mealCategory;
+    double price;
 };
 
 #endif

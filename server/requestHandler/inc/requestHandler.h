@@ -27,6 +27,7 @@ private:
     std::string handleAddMenuRequest(const std::string &data);
     std::string handleDelMenuRequest(const std::string &data);
     std::string handleAddDailyMenuItemRequest(const std::string &data);
+    std::string handleGetDailyMenuRequest(const std::string &data);
 };
 
 #endif 
