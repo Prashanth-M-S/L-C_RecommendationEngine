@@ -80,7 +80,7 @@ int main()
             }
             else
             {
-                std::cout << "Chef athentication failedn";
+                std::cout << "Chef athentication failed\n";
             }
             break;
         }
@@ -93,7 +93,7 @@ int main()
             }
             else
             {
-                std::cout << "Chef athentication failedn";
+                std::cout << "Chef athentication failed\n";
             }
             break;
         }

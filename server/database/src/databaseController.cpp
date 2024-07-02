@@ -276,3 +276,57 @@ bool DatabaseController::insertUserOrderEntries(const std::vector<UserOrderEntry
 
     return false;
 }
+
+int DatabaseController::getMenuIdFromDailyMenuId(int dailyMenuId)
+{
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement("SELECT menuId FROM dailyMenu WHERE dailyMenuId = ?"));
+        preparedStatement->setInt(1, dailyMenuId);
+
+        std::unique_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
+
+        if (resultSet->next())
+        {
+            return resultSet->getInt("menuId");
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "DatabaseController::getMenuIdFromDailyMenuId() SQLException: " << e.what() << "\n";
+    }
+
+    return -1;
+}
+
+bool DatabaseController::insertUserFeedback(const Feedback &feedback)
+{
+    int menuId = getMenuIdFromDailyMenuId(feedback.menuId);
+    if (menuId == -1)
+    {
+        std::cerr << "DatabaseController::insertUserFeedback() Error: Invalid dailyMenuId\n";
+        return false;
+    }
+
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement(
+                "INSERT INTO feedback (menuId, userId, rating, comment, feedback_date) VALUES (?, ?, ?, ?, CURDATE())"));
+
+        preparedStatement->setInt(1, menuId);
+        preparedStatement->setInt(2, feedback.userId);
+        preparedStatement->setDouble(3, feedback.rating);
+        preparedStatement->setString(4, feedback.comment);
+
+        int rowsAffected = preparedStatement->executeUpdate();
+        return rowsAffected == 1;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "DatabaseController::insertUserFeedback() SQLException (Insert feedback): " << e.what() << "\n";
+    }
+
+    return false;
+}

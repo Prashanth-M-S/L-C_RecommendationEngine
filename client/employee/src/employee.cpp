@@ -17,10 +17,9 @@ void Employee::mainMenu()
         std::cout << "---------Main Menu---------\n";
         std::cout << "\n1. View Menu\n";
         std::cout << "2. Order Food\n";
-        std::cout << "3. Logout\n";
+        std::cout << "3. Give Feedback\n";
+        std::cout << "4. Logout\n";
         std::cout << "-----------------------------\n";
-
-        std::cout << "Enter your choice: ";
 
         choice = userInputHandler->getIntInput("Enter your choice: ");
 
@@ -33,12 +32,15 @@ void Employee::mainMenu()
             placeOrder();
             break;
         case 3:
-            std::cout << "Logging out...\n";
+            giveFeedback();
             break;
+        case 4:
+            std::cout << "logging out..." << std::endl;
+            break;;
         default:
             std::cout << "Invalid choice. Please try again.\n";
         }
-    } while (choice != 3);
+    } while (choice != 4);
 }
 
 void Employee::viewMenu()
@@ -86,7 +88,6 @@ void Employee::viewMenu()
 
 void Employee::placeOrder()
 {
-
     viewMenu();
 
     int dailyMenuId = userInputHandler->getIntInput("Enter id to order: ");
@@ -98,6 +99,33 @@ void Employee::placeOrder()
     }
 
     std::string request = "PLACE_ORDER," + std::to_string(id) + "," + std::to_string(dailyMenuId);
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Failed to send request to server." << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+
+    std::cout << response << std::endl;
+}
+
+void Employee::giveFeedback()
+{
+    viewMenu();
+
+    int dailyMenuId = userInputHandler->getIntInput("Enter the id of the menu item to give feedback for: ");
+    float rating = userInputHandler->getFoodRatingInput("Enter your rating (0 to 5): ");
+    std::string comment = userInputHandler->getStringInput("Enter your comment: ");
+
+    if (!serverConnection.connectToServer())
+    {
+        std::cout << "Failed to connect to server." << std::endl;
+        return;
+    }
+
+    std::string request = "ADD_FEEDBACK," + std::to_string(dailyMenuId) + "," + std::to_string(id) + "," + std::to_string(rating) + "," + comment;
 
     if (!serverConnection.sendRequest(request))
     {

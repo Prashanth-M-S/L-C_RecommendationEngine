@@ -23,11 +23,13 @@ public:
     std::string authenticateUser(int userId, const std::string &password);
     bool addUser(const User &user);
     bool deleteUser(int userId);
-    bool addMenu(const MenuData& menu);
+    bool addMenu(const MenuData &menu);
     bool deleteMenu(int menuId);
     bool insertDailyMenuEntries(const std::vector<DailyMenuEntry> &dailyMenuEntry);
     std::vector<GetDailyMenu> getDailyMenu();
     bool insertUserOrderEntries(const std::vector<UserOrderEntry> &userOrderEntries);
+    int getMenuIdFromDailyMenuId(int dailyMenuId);
+    bool insertUserFeedback(const Feedback &feedback);
 
 private:
     void connect();

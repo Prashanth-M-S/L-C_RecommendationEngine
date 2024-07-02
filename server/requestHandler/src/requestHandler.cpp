@@ -94,6 +94,10 @@ std::string RequestHandler::processRequest(const GeneralRequest &request)
     {
         return handlePlaceOrderRequest(request.requestData);
     }
+    else if (request.requestType == "ADD_FEEDBACK")
+    {
+        return handleAddUserFeedbackRequest(request.requestData);
+    }
 
     return "UNKNOWN_REQUEST";
 }
@@ -285,6 +289,27 @@ std::string RequestHandler::handlePlaceOrderRequest(const std::string &data)
         else
         {
             return "STATUS_ERROR,Failed to place user order";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handleAddUserFeedbackRequest(const std::string &data)
+{
+    std::pair<bool, Feedback> addFeedbackParam = dataParser->deserializeUserFeedbackRequest(data);
+
+    if (addFeedbackParam.first)
+    {
+        if (database->insertUserFeedback(addFeedbackParam.second))
+        {
+            return "STATUS_OK,User feedback added successfully";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to add user feedback";
         }
     }
     else

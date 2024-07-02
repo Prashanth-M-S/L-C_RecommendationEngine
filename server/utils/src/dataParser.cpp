@@ -111,3 +111,44 @@ std::string DataParser::serializeData(const std::vector<GetDailyMenu> &items)
 
     return result;
 }
+
+std::pair<bool, Feedback> DataParser::deserializeUserFeedbackRequest(const std::string &data)
+{
+    std::istringstream iss(data);
+    std::string item;
+    std::vector<std::string> tokens;
+    Feedback feedback;
+
+    while (getline(iss, item, ','))
+    {
+        tokens.push_back(item);
+    }
+
+    if (tokens.size() < 4)
+    {
+        return {false, feedback};
+    }
+
+    try
+    {
+        feedback.menuId = std::stoi(tokens.at(0));
+        feedback.userId = std::stoi(tokens.at(1));
+        feedback.rating = std::stof(tokens.at(2));
+
+        std::string comment;
+        for (size_t i = 3; i < tokens.size(); ++i)
+        {
+            if (i > 3)
+                comment += ",";
+            comment += tokens[i];
+        }
+
+        feedback.comment = comment;
+    }
+    catch (const std::exception &e)
+    {
+        return {false, feedback};
+    }
+
+    return {true, feedback};
+}

@@ -9,6 +9,7 @@ class UserInputHandler
 public:
     int getIntInput(const std::string &prompt);
     std::string getStringInput(const std::string &prompt);
+    float getFoodRatingInput(const std::string &prompt);
 };
 
 #endif
