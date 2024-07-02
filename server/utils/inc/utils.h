@@ -65,4 +65,10 @@ public:
     double price;
 };
 
+struct UserOrderEntry
+{
+    int userId;
+    int dailyMenuId;
+};
+
 #endif

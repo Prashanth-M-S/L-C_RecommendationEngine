@@ -27,6 +27,7 @@ public:
     bool deleteMenu(int menuId);
     bool insertDailyMenuEntries(const std::vector<DailyMenuEntry> &dailyMenuEntry);
     std::vector<GetDailyMenu> getDailyMenu();
+    bool insertUserOrderEntries(const std::vector<UserOrderEntry> &userOrderEntries);
 
 private:
     void connect();

@@ -16,6 +16,11 @@ void Employee::mainMenu()
     {
         std::cout << "---------Main Menu---------\n";
         std::cout << "\n1. View Menu\n";
+        std::cout << "2. Order Food\n";
+        std::cout << "3. Logout\n";
+        std::cout << "-----------------------------\n";
+
+        std::cout << "Enter your choice: ";
 
         choice = userInputHandler->getIntInput("Enter your choice: ");
 
@@ -25,7 +30,7 @@ void Employee::mainMenu()
             viewMenu();
             break;
         case 2:
-            viewMenu();
+            placeOrder();
             break;
         case 3:
             std::cout << "Logging out...\n";
@@ -77,4 +82,30 @@ void Employee::viewMenu()
     {
         std::cout << "Failed to get the daily menu items: " << status << "\n";
     }
+}
+
+void Employee::placeOrder()
+{
+
+    viewMenu();
+
+    int dailyMenuId = userInputHandler->getIntInput("Enter id to order: ");
+
+    if (!serverConnection.connectToServer())
+    {
+        std::cout << "Failed to connect to server." << std::endl;
+        return;
+    }
+
+    std::string request = "PLACE_ORDER," + std::to_string(id) + "," + std::to_string(dailyMenuId);
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Failed to send request to server." << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+
+    std::cout << response << std::endl;
 }

@@ -18,6 +18,7 @@ public:
 
     void mainMenu();
     void viewMenu();
+    void placeOrder();
 
 private:
     ServerConnection &serverConnection;

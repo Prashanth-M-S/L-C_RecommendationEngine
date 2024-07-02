@@ -90,6 +90,10 @@ std::string RequestHandler::processRequest(const GeneralRequest &request)
     {
         return handleGetDailyMenuRequest(request.requestData);
     }
+    else if (request.requestType == "PLACE_ORDER")
+    {
+        return handlePlaceOrderRequest(request.requestData);
+    }
 
     return "UNKNOWN_REQUEST";
 }
@@ -198,7 +202,6 @@ std::string RequestHandler::handleAddMenuRequest(const std::string &data)
     menuData.menuName = addMenuParam.second.at(0);
     menuData.price = std::stod(addMenuParam.second.at(1));
 
-
     if (addMenuParam.first)
     {
         if (database->addMenu(menuData))
@@ -232,7 +235,7 @@ std::string RequestHandler::handleAddDailyMenuItemRequest(const std::string &dat
     std::pair<bool, std::vector<std::string>> addDailyMenuItemParam = dataParser->deserializeData(data);
     DailyMenuEntry dailyMenuEntry;
 
-    dailyMenuEntry.menuId  = std::stoi(addDailyMenuItemParam.second.at(0));
+    dailyMenuEntry.menuId = std::stoi(addDailyMenuItemParam.second.at(0));
     dailyMenuEntry.availability = std::stoi(addDailyMenuItemParam.second.at(1));
     dailyMenuEntry.mealCategory = addDailyMenuItemParam.second.at(2);
 
@@ -263,4 +266,29 @@ std::string RequestHandler::handleGetDailyMenuRequest(const std::string &data)
     }
 
     return "STATUS_OK," + dataParser->serializeData(items);
+}
+
+std::string RequestHandler::handlePlaceOrderRequest(const std::string &data)
+{
+    std::pair<bool, std::vector<std::string>> placeOrderParam = dataParser->deserializeData(data);
+    UserOrderEntry userOrderEntry;
+
+    userOrderEntry.userId = std::stoi(placeOrderParam.second.at(0));
+    userOrderEntry.dailyMenuId = std::stoi(placeOrderParam.second.at(1));
+
+    if (placeOrderParam.first)
+    {
+        if (database->insertUserOrderEntries({userOrderEntry}))
+        {
+            return "STATUS_OK,User order placed successfully";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to place user order";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
 }

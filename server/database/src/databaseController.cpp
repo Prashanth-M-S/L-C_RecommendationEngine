@@ -252,3 +252,27 @@ std::vector<GetDailyMenu> DatabaseController::getDailyMenu()
 
     return dailyMenu;
 }
+
+bool DatabaseController::insertUserOrderEntries(const std::vector<UserOrderEntry> &userOrderEntries)
+{
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement("INSERT INTO userOrder (userId, dailyMenuId) VALUES (?, ?)"));
+
+        for (const auto &entry : userOrderEntries)
+        {
+            preparedStatement->setInt(1, entry.userId);
+            preparedStatement->setInt(2, entry.dailyMenuId);
+            preparedStatement->executeUpdate();
+        }
+
+        return true;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "DatabaseController::insertUserOrderEntries() SQLException: " << e.what() << "\n";
+    }
+
+    return false;
+}

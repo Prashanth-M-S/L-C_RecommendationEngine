@@ -18,6 +18,7 @@ public:
     virtual bool deleteMenu(int menuId) = 0;
     virtual bool insertDailyMenuEntries(const std::vector<DailyMenuEntry> &dailyMenuEntry) = 0;
     virtual std::vector<GetDailyMenu> getDailyMenu() = 0;
+    virtual bool insertUserOrderEntries(const std::vector<UserOrderEntry> &userOrderEntries) = 0;
 };
 
 #endif
