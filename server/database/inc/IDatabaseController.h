@@ -20,6 +20,10 @@ public:
     virtual std::vector<GetDailyMenu> getDailyMenu() = 0;
     virtual bool insertUserOrderEntries(const std::vector<UserOrderEntry> &userOrderEntries) = 0;
     virtual bool insertUserFeedback(const Feedback &feedback) = 0;
+    virtual bool insertNotification(const std::string &message) = 0;
+    virtual bool addNotification(const std::string &message) = 0;
+    virtual std::vector<Notification> getNonViewedNotificationsForUser(int userId) = 0;
+    virtual bool markNotificationsAsViewed(int userId, const std::vector<int> &notificationIds) = 0;
 };
 
 #endif

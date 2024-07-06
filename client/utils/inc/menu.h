@@ -47,4 +47,11 @@ public:
     double price;
 };
 
+struct Notification
+{
+    int notificationId;
+    std::string message;
+    std::string dateUpdated;
+};
+
 #endif

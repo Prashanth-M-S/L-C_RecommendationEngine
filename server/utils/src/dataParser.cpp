@@ -152,3 +152,40 @@ std::pair<bool, Feedback> DataParser::deserializeUserFeedbackRequest(const std::
 
     return {true, feedback};
 }
+
+std::string DataParser::serializeData(const std::vector<Notification> &notifications)
+{
+    std::ostringstream oss;
+
+    for (const auto &notification : notifications)
+    {
+        oss << notification.notificationId << ","
+            << notification.message << ","
+            << notification.dateUpdated << ";";
+    }
+
+    std::string serializedData = oss.str();
+    if (!serializedData.empty())
+    {
+        serializedData.pop_back();
+    }
+
+    return serializedData;
+}
+
+std::pair<int, std::vector<int>> DataParser::deserializeMarkNotificationsViewedRequest(const std::string &data)
+{
+    std::vector<int> notificationIds;
+    std::stringstream ss(data);
+    std::string segment;
+
+    std::getline(ss, segment, ',');
+    int userId = std::stoi(segment);
+
+    while (std::getline(ss, segment, ','))
+    {
+        notificationIds.push_back(std::stoi(segment));
+    }
+
+    return {userId, notificationIds};
+}

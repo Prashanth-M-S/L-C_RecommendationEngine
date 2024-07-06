@@ -1,5 +1,6 @@
 #include "employee.h"
 #include <iostream>
+#include <sstream>
 #include <iomanip>
 
 Employee::Employee(int id, const std::string &password, ServerConnection &serverConnection)
@@ -18,7 +19,8 @@ void Employee::mainMenu()
         std::cout << "\n1. View Menu\n";
         std::cout << "2. Order Food\n";
         std::cout << "3. Give Feedback\n";
-        std::cout << "4. Logout\n";
+        std::cout << "4. checkNotifications\n";
+        std::cout << "5. Logout\n";
         std::cout << "-----------------------------\n";
 
         choice = userInputHandler->getIntInput("Enter your choice: ");
@@ -35,8 +37,11 @@ void Employee::mainMenu()
             giveFeedback();
             break;
         case 4:
+            checkNotifications();
+            break;
+        case 5:
             std::cout << "logging out..." << std::endl;
-            break;;
+            break;
         default:
             std::cout << "Invalid choice. Please try again.\n";
         }
@@ -136,4 +141,65 @@ void Employee::giveFeedback()
     std::string response = serverConnection.readResponse();
 
     std::cout << response << std::endl;
+}
+
+void Employee::checkNotifications()
+{
+    if (!serverConnection.connectToServer())
+    {
+        std::cout << "Failed to connect to server." << std::endl;
+        return;
+    }
+
+    std::string request = "GET_NOTIFICATIONS," + std::to_string(id);
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Failed to send request to server." << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+    auto [status, notifications] = dataParser->deserializeNotifications(response);
+
+    if (status == "STATUS_OK")
+    {
+        if (notifications.empty())
+        {
+            std::cout << "No new notifications.\n";
+        }
+        else
+        {
+            std::cout << "-------------------- Notifications -----------------------\n";
+            std::cout << "----------------------------------------------------------\n";
+            std::cout << "| ID | Message              | Date                       |\n";
+            std::cout << "----------------------------------------------------------\n";
+
+            for (const auto &notification : notifications)
+            {
+                std::cout << "| "
+                          << std::setw(3) << notification.notificationId << " | "
+                          << std::setw(20) << notification.message.substr(0, 20) << " | "
+                          << std::setw(14) << notification.dateUpdated << " |\n";
+            }
+
+            std::cout << "---------------------------------------------\n";
+
+            std::ostringstream oss;
+            for (const auto &notification : notifications)
+            {
+                oss << notification.notificationId << ",";
+            }
+            std::string markViewedRequest = "MARK_NOTIFICATIONS_VIEWED," + std::to_string(id) + "," + oss.str();
+
+            if (!serverConnection.sendRequest(markViewedRequest))
+            {
+                std::cerr << "Failed to send request to mark notifications as viewed." << std::endl;
+            }
+        }
+    }
+    else
+    {
+        std::cout << "Failed to get notifications: " << status << "\n";
+    }
 }

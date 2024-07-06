@@ -30,6 +30,10 @@ public:
     bool insertUserOrderEntries(const std::vector<UserOrderEntry> &userOrderEntries);
     int getMenuIdFromDailyMenuId(int dailyMenuId);
     bool insertUserFeedback(const Feedback &feedback);
+    bool insertNotification(const std::string &message);
+    bool addNotification(const std::string &message);
+    std::vector<Notification> getNonViewedNotificationsForUser(int userId);
+    bool markNotificationsAsViewed(int userId, const std::vector<int> &notificationIds);
 
 private:
     void connect();

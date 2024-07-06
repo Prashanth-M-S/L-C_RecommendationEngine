@@ -102,3 +102,39 @@ std::pair<std::string, std::vector<DailyMenuEntry>> DataParser::deserializeToDai
 
     return {statusCode, items};
 }
+
+std::pair<std::string, std::vector<Notification>> DataParser::deserializeNotifications(const std::string &data)
+{
+    std::pair<std::string, std::vector<Notification>> result;
+    std::istringstream ss(data);
+    std::string status;
+    std::getline(ss, status, ',');
+
+    result.first = status;
+
+    std::string item;
+    try 
+    {
+        while (std::getline(ss, item, ';'))
+        {
+            Notification notification;
+            std::istringstream itemStream(item);
+            std::string field;
+            
+            std::getline(itemStream, field, ',');
+            notification.notificationId = std::stoi(field);
+            std::getline(itemStream, field, ',');
+            notification.message = field;
+            std::getline(itemStream, field, ',');
+            notification.dateUpdated = field;
+
+            result.second.push_back(notification);
+        }
+    }
+    catch (const std::exception& e)
+    {
+        result.second.clear();
+    }
+
+    return result;
+}

@@ -30,6 +30,9 @@ private:
     std::string handleGetDailyMenuRequest(const std::string &data);
     std::string handlePlaceOrderRequest(const std::string &data);
     std::string handleAddUserFeedbackRequest(const std::string &data);
+    std::string handleNotification(const std::string &data);
+    std::string handleGetNotifications(const std::string &data);
+    std::string handleMarkNotificationsViewed(const std::string &data);
 };
 
 #endif 

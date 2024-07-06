@@ -71,4 +71,11 @@ struct UserOrderEntry
     int dailyMenuId;
 };
 
+struct Notification
+{
+    int notificationId;
+    std::string message;
+    std::string dateUpdated;
+};
+
 #endif

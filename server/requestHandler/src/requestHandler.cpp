@@ -98,6 +98,15 @@ std::string RequestHandler::processRequest(const GeneralRequest &request)
     {
         return handleAddUserFeedbackRequest(request.requestData);
     }
+    else if (request.requestType == "GET_NOTIFICATIONS")
+    {
+        return handleGetNotifications(request.requestData);
+    }
+    else if (request.requestType == "MARK_NOTIFICATIONS_VIEWED")
+    {
+        printf("Mark notifications viewd requested");
+        return handleMarkNotificationsViewed(request.requestData);
+    }
 
     return "UNKNOWN_REQUEST";
 }
@@ -247,6 +256,7 @@ std::string RequestHandler::handleAddDailyMenuItemRequest(const std::string &dat
     {
         if (database->insertDailyMenuEntries({dailyMenuEntry}))
         {
+            handleNotification("Menu is added");
             return "STATUS_OK,Daily menu item added successfully";
         }
         else
@@ -315,5 +325,40 @@ std::string RequestHandler::handleAddUserFeedbackRequest(const std::string &data
     else
     {
         return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handleNotification(const std::string &data)
+{
+    if (database->addNotification(data))
+    {
+        return "STATUS_OK,Notification sent successfully";
+    }
+}
+
+std::string RequestHandler::handleGetNotifications(const std::string &data)
+{
+    int userId = std::stoi(data);
+    std::vector<Notification> notifications = database->getNonViewedNotificationsForUser(userId);
+
+    if (notifications.empty())
+    {
+        return "STATUS_OK,NO_NOTIFICATIONS";
+    }
+
+    return "STATUS_OK," + dataParser->serializeData(notifications);
+}
+
+std::string RequestHandler::handleMarkNotificationsViewed(const std::string &data)
+{
+    auto [userId, notificationIds] = dataParser->deserializeMarkNotificationsViewedRequest(data);
+
+    if (database->markNotificationsAsViewed(userId, notificationIds))
+    {
+        return "STATUS_OK,Notifications marked as viewed";
+    }
+    else
+    {
+        return "STATUS_ERROR,Failed to mark notifications as viewed";
     }
 }
