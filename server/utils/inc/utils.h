@@ -11,6 +11,14 @@ struct MenuData
     float price;
 };
 
+struct MenuAttributes : public MenuData
+{
+    std::string dietType;
+    std::string spiceLevel;
+    std::string cuisineType;
+    std::string sweetType;
+};
+
 struct RecommendedMenuData : public MenuData
 {
     float recommendationScore;
@@ -48,6 +56,15 @@ struct User
         : userId(id), username(name), password(password), role(roll) {}
 };
 
+struct UserProfile
+{
+    int userId;
+    std::string preferenceType;
+    std::string spiceLevel;
+    std::string cuisinePreference;
+    std::string sweetTooth;
+};
+
 struct DailyMenuEntry
 {
     int menuId;
@@ -55,7 +72,7 @@ struct DailyMenuEntry
     std::string mealCategory;
 };
 
-class GetDailyMenu
+class DailyMenuAttributes : public MenuAttributes
 {
 public:
     int dailyMenuId;

@@ -33,6 +33,8 @@ private:
     std::string handleNotification(const std::string &data);
     std::string handleGetNotifications(const std::string &data);
     std::string handleMarkNotificationsViewed(const std::string &data);
+    std::string handleUpdateProfile(const std::string &data);
+    std::string handleViewProfile(const std::string &data);
 };
 
 #endif 

@@ -54,4 +54,13 @@ struct Notification
     std::string dateUpdated;
 };
 
+struct UserProfile
+{
+    int userId;
+    std::string preferenceType;
+    std::string spiceLevel;
+    std::string cuisinePreference;
+    std::string sweetTooth;
+};
+
 #endif

@@ -105,9 +105,24 @@ void Admin::deleteUser()
 void Admin::addMenu()
 {
     std::string menuName = userInputHandler->getStringInput("Enter menu name: ");
-    int menuprice = userInputHandler->getIntInput("Enter cost: ");
+    float menuPrice = userInputHandler->getIntInput("Enter cost: ");
+    
+    std::vector<std::string> dietOptions = {"Vegetarian", "Non Vegetarian", "Eggetarian"};
+    std::vector<std::string> spiceOptions = {"High", "Medium", "Low", "None"};
+    std::vector<std::string> cuisineOptions = {"North Indian", "South Indian", "Other"};
+    std::vector<std::string> sweetOptions = {"Yes", "No"};
 
-    std::string request = "ADD_MENU," + menuName + "," + std::to_string(menuprice);
+    int dietChoice = userInputHandler->getChoiceInput("Select diet type:", dietOptions);
+    int spiceChoice = userInputHandler->getChoiceInput("Select spice level:", spiceOptions);
+    int cuisineChoice = userInputHandler->getChoiceInput("Select cuisine type:", cuisineOptions);
+    int sweetChoice = userInputHandler->getChoiceInput("Is it a sweet dish?", sweetOptions);
+
+    std::string dietType = dietOptions[dietChoice - 1];
+    std::string spiceLevel = spiceOptions[spiceChoice - 1];
+    std::string cuisineType = cuisineOptions[cuisineChoice - 1];
+    std::string sweetType = sweetOptions[sweetChoice - 1];
+
+    std::string request = "ADD_MENU," + menuName + "," + std::to_string(menuPrice) + "," + dietType + "," + spiceLevel + "," + cuisineType + "," + sweetType;
 
     if (!serverConnection.connectToServer())
     {
@@ -120,8 +135,8 @@ void Admin::addMenu()
         std::cerr << "Send request failed" << std::endl;
         return;
     }
+
     std::string response = serverConnection.readResponse();
-    
     std::cout << "Server response: " << response << std::endl;
 }
 

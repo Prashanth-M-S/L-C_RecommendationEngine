@@ -23,10 +23,10 @@ public:
     std::string authenticateUser(int userId, const std::string &password);
     bool addUser(const User &user);
     bool deleteUser(int userId);
-    bool addMenu(const MenuData &menu);
+    bool addMenu(const MenuAttributes &menu);
     bool deleteMenu(int menuId);
     bool insertDailyMenuEntries(const std::vector<DailyMenuEntry> &dailyMenuEntry);
-    std::vector<GetDailyMenu> getDailyMenu();
+    std::vector<DailyMenuAttributes> getDailyMenu();
     bool insertUserOrderEntries(const std::vector<UserOrderEntry> &userOrderEntries);
     int getMenuIdFromDailyMenuId(int dailyMenuId);
     bool insertUserFeedback(const Feedback &feedback);
@@ -34,7 +34,11 @@ public:
     bool addNotification(const std::string &message);
     std::vector<Notification> getNonViewedNotificationsForUser(int userId);
     bool markNotificationsAsViewed(int userId, const std::vector<int> &notificationIds);
-
+    UserProfile fetchUserProfile(int userId);
+    std::vector<DailyMenuAttributes> getDailyMenuWithAttributes();
+    bool updateUserProfile(const UserProfile &profile);
+    UserProfile getUserProfile(int userId);
+    
 private:
     void connect();
 

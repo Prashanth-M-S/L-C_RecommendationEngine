@@ -64,3 +64,40 @@ float UserInputHandler::getFoodRatingInput(const std::string &prompt)
     }
     return rating;
 }
+
+int UserInputHandler::getChoiceInput(const std::string &prompt, const std::vector<std::string> &choices)
+{
+    std::string inputStr;
+    int input;
+    while (true)
+    {
+        std::cout << prompt << "\n";
+        for (size_t i = 0; i < choices.size(); ++i)
+        {
+            std::cout << (i + 1) << ") " << choices[i] << "\n";
+        }
+        std::cout << "Enter your choice (1-" << choices.size() << "): ";
+        std::getline(std::cin >> std::ws, inputStr);
+        try
+        {
+            input = std::stoi(inputStr);
+            if (input >= 1 && input <= static_cast<int>(choices.size()))
+            {
+                break;
+            }
+            else
+            {
+                std::cout << "Invalid choice. Please enter a number between 1 and " << choices.size() << ".\n";
+            }
+        }
+        catch (std::invalid_argument &)
+        {
+            std::cout << "Invalid input. Please enter a valid integer.\n";
+        }
+        catch (std::out_of_range &)
+        {
+            std::cout << "Input out of range for integer.\n";
+        }
+    }
+    return input;
+}

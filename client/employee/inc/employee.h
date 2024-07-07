@@ -21,6 +21,8 @@ public:
     void placeOrder();
     void giveFeedback();
     void checkNotifications();
+    void updateProfile();
+    void viewProfile();
 
 private:
     ServerConnection &serverConnection;

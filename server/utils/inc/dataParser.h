@@ -25,7 +25,7 @@ public:
     std::pair<bool, std::string> deserializeRecommendedMenuData(const std::vector<RecommendedMenuData> &menus);
     std::pair<bool, User> deserializeAddUserRequest(const std::string &data);
     std::pair<bool, std::vector<std::string>> deserializeData(const std::string &data);
-    std::string serializeData(const std::vector<GetDailyMenu> &items);
+    std::string serializeData(const std::vector<DailyMenuAttributes> &items);
     std::pair<bool, Feedback> deserializeUserFeedbackRequest(const std::string &data);
     std::string serializeData(const std::vector<Notification> &notifications);
     std::pair<int, std::vector<int>> deserializeMarkNotificationsViewedRequest(const std::string &data);

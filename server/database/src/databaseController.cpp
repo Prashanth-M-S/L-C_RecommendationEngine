@@ -155,21 +155,27 @@ bool DatabaseController::deleteUser(int userId)
     return false;
 }
 
-bool DatabaseController::addMenu(const MenuData &menu)
+bool DatabaseController::addMenu(const MenuAttributes &menuData)
 {
     try
     {
         std::unique_ptr<sql::PreparedStatement> preparedStatement(
-            connection->prepareStatement("INSERT INTO menu (menu_name, price) VALUES (?, ?)"));
-        preparedStatement->setString(1, menu.menuName);
-        preparedStatement->setDouble(2, menu.price);
-        int rowsAffected = preparedStatement->executeUpdate();
+            connection->prepareStatement(
+                "INSERT INTO menu (menu_name, price, diet_type, spice_level, cuisine_type, sweet_type) VALUES (?, ?, ?, ?, ?, ?)"));
 
+        preparedStatement->setString(1, menuData.menuName);
+        preparedStatement->setDouble(2, menuData.price);
+        preparedStatement->setString(3, menuData.dietType);
+        preparedStatement->setString(4, menuData.spiceLevel);
+        preparedStatement->setString(5, menuData.cuisineType);
+        preparedStatement->setString(6, menuData.sweetType);
+
+        int rowsAffected = preparedStatement->executeUpdate();
         return rowsAffected == 1;
     }
     catch (sql::SQLException &e)
     {
-        printf("DatabaseController::addMenu() SQLException: %s\n", e.what());
+        std::cerr << "DatabaseController::addMenu() SQLException: " << e.what() << "\n";
     }
 
     return false;
@@ -219,9 +225,9 @@ bool DatabaseController::insertDailyMenuEntries(const std::vector<DailyMenuEntry
     return false;
 }
 
-std::vector<GetDailyMenu> DatabaseController::getDailyMenu()
+std::vector<DailyMenuAttributes> DatabaseController::getDailyMenu()
 {
-    std::vector<GetDailyMenu> dailyMenu;
+    std::vector<DailyMenuAttributes> dailyMenu;
 
     try
     {
@@ -236,7 +242,7 @@ std::vector<GetDailyMenu> DatabaseController::getDailyMenu()
 
         while (resultSet->next())
         {
-            GetDailyMenu entry;
+            DailyMenuAttributes entry;
             entry.dailyMenuId = resultSet->getInt("dailyMenuId");
             entry.itemName = resultSet->getString("itemName");
             entry.availability = resultSet->getInt("availability");
@@ -444,4 +450,124 @@ bool DatabaseController::markNotificationsAsViewed(int userId, const std::vector
     }
 
     return false;
+}
+
+UserProfile DatabaseController::fetchUserProfile(int userId)
+{
+    UserProfile profile;
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(connection->prepareStatement(
+            "SELECT preferenceType, spiceLevel, cuisinePreference, sweetTooth FROM users WHERE userId = ?"));
+        preparedStatement->setInt(1, userId);
+        std::unique_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
+
+        if (resultSet->next())
+        {
+            profile.userId = userId;
+            profile.preferenceType = resultSet->getString("preferenceType");
+            profile.spiceLevel = resultSet->getString("spiceLevel");
+            profile.cuisinePreference = resultSet->getString("cuisinePreference");
+            profile.sweetTooth = resultSet->getString("sweetTooth");
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        printf("DatabaseController::fetchUserProfile() SQLException: %s\n", e.what());
+    }
+    return profile;
+}
+
+std::vector<DailyMenuAttributes> DatabaseController::getDailyMenuWithAttributes()
+{
+    std::vector<DailyMenuAttributes> dailyMenu;
+
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement(
+                "SELECT dm.dailyMenuId, m.menu_name, dm.availability, dm.mealCategory, m.price, "
+                "m.diet_type, m.spice_level, m.cuisine_type, m.sweet_type "
+                "FROM dailyMenu dm "
+                "JOIN menu m ON dm.menuId = m.menuId "
+                "WHERE dm.menuDate = CURDATE()"));
+
+        std::unique_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
+
+        while (resultSet->next())
+        {
+            DailyMenuAttributes entry;
+            entry.dailyMenuId = resultSet->getInt("dailyMenuId");
+            entry.menuName = resultSet->getString("menu_name");
+            entry.availability = resultSet->getInt("availability");
+            entry.mealCategory = resultSet->getString("mealCategory");
+            entry.price = resultSet->getDouble("price");
+            entry.dietType = resultSet->getString("diet_type");
+            entry.spiceLevel = resultSet->getString("spice_level");
+            entry.cuisineType = resultSet->getString("cuisine_type");
+            entry.sweetType = resultSet->getString("sweet_type");
+
+            dailyMenu.push_back(entry);
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "DatabaseController::getDailyMenuWithAttributes() SQLException: " << e.what() << "\n";
+    }
+
+    return dailyMenu;
+}
+
+bool DatabaseController::updateUserProfile(const UserProfile &profile)
+{
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement(
+                "UPDATE users SET preferenceType = ?, spiceLevel = ?, cuisinePreference = ?, sweetTooth = ? WHERE userId = ?"));
+
+        preparedStatement->setString(1, profile.preferenceType);
+        preparedStatement->setString(2, profile.spiceLevel);
+        preparedStatement->setString(3, profile.cuisinePreference);
+        preparedStatement->setString(4, profile.sweetTooth);
+        preparedStatement->setInt(5, profile.userId);
+
+        int updatedRows = preparedStatement->executeUpdate();
+        return updatedRows > 0;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "DatabaseController::updateUserProfile() SQLException: " << e.what() << "\n";
+        return false;
+    }
+}
+
+UserProfile DatabaseController::getUserProfile(int userId)
+{
+    UserProfile userProfile;
+
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement(
+                "SELECT userId, preferenceType, spiceLevel, cuisinePreference, sweetTooth FROM users WHERE userId = ?"));
+
+        preparedStatement->setInt(1, userId);
+        std::unique_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
+
+        if (resultSet->next())
+        {
+            userProfile.userId = resultSet->getInt("userId");
+            userProfile.preferenceType = resultSet->getString("preferenceType");
+            userProfile.spiceLevel = resultSet->getString("spiceLevel");
+            userProfile.cuisinePreference = resultSet->getString("cuisinePreference");
+            userProfile.sweetTooth = resultSet->getString("sweetTooth");
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "DatabaseController::getUserProfile() SQLException: " << e.what() << "\n";
+    }
+
+    return userProfile;
 }

@@ -31,7 +31,6 @@ std::vector<RecommendedMenuData> RecommendationEngine::getRecommendedFood()
     return recommendedMenus;
 }
 
-
 float RecommendationEngine::calculateSentimentScore(const std::string &feedback)
 {
     std::istringstream inputStream(feedback);
@@ -71,4 +70,60 @@ float RecommendationEngine::calculateSentimentScore(const std::string &feedback)
     }
 
     return totalWords ? totalSentimentScore / totalWords : 0;
+}
+
+std::vector<DailyMenuAttributes> RecommendationEngine::getRecommendedFoodForUser(int userId)
+{
+    UserProfile userProfile = database->fetchUserProfile(userId);
+    std::vector<DailyMenuAttributes> dailyMenus = database->getDailyMenuWithAttributes();
+    std::vector<DailyMenuAttributes> sortedMenus = sortMenusByUserProfile(dailyMenus, userProfile);
+
+    return sortedMenus;
+}
+
+std::vector<DailyMenuAttributes> RecommendationEngine::sortMenusByUserProfile(const std::vector<DailyMenuAttributes> &menus, const UserProfile &profile)
+{
+    std::vector<std::pair<DailyMenuAttributes, int>> scoredMenus;
+
+    for (const auto &menu : menus)
+    {
+        int preferenceScore = 0;
+
+        if (profile.preferenceType != "NO PREFERENCE" && profile.preferenceType == menu.dietType)
+        {
+            preferenceScore += 3;
+        }
+
+        if (profile.spiceLevel != "NO PREFERENCE" && profile.spiceLevel == menu.spiceLevel)
+        {
+            preferenceScore += 2;
+        }
+
+        if (profile.cuisinePreference != "NO PREFERENCE" && profile.cuisinePreference == menu.cuisineType)
+        {
+            preferenceScore += 2;
+        }
+
+        if (profile.sweetTooth != "NO PREFERENCE" &&
+            ((profile.sweetTooth == "YES" && menu.sweetType == "Yes") || (profile.sweetTooth == "NO" && menu.sweetType == "No")))
+        {
+            preferenceScore += 1;
+        }
+
+        scoredMenus.push_back({menu, preferenceScore});
+    }
+
+    std::sort(scoredMenus.begin(), scoredMenus.end(),
+              [](const std::pair<DailyMenuAttributes, int> &a, const std::pair<DailyMenuAttributes, int> &b)
+              {
+                  return a.second > b.second;
+              });
+
+    std::vector<DailyMenuAttributes> sortedMenus;
+    for (const auto &scoredMenu : scoredMenus)
+    {
+        sortedMenus.push_back(scoredMenu.first);
+    }
+
+    return sortedMenus;
 }

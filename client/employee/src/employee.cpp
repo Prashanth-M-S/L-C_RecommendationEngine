@@ -20,7 +20,9 @@ void Employee::mainMenu()
         std::cout << "2. Order Food\n";
         std::cout << "3. Give Feedback\n";
         std::cout << "4. checkNotifications\n";
-        std::cout << "5. Logout\n";
+        std::cout << "5. Update Profile\n";
+        std::cout << "6. View Profile\n";
+        std::cout << "7. Logout\n";
         std::cout << "-----------------------------\n";
 
         choice = userInputHandler->getIntInput("Enter your choice: ");
@@ -40,12 +42,18 @@ void Employee::mainMenu()
             checkNotifications();
             break;
         case 5:
+            updateProfile();
+            break;
+        case 6:
+            viewProfile();
+            break;
+        case 7:
             std::cout << "logging out..." << std::endl;
             break;
         default:
             std::cout << "Invalid choice. Please try again.\n";
         }
-    } while (choice != 4);
+    } while (choice != 7);
 }
 
 void Employee::viewMenu()
@@ -56,7 +64,7 @@ void Employee::viewMenu()
         return;
     }
 
-    std::string request = "GET_DAILY_MENU";
+    std::string request = "GET_DAILY_MENU," + std::to_string(id);
     if (!serverConnection.sendRequest(request))
     {
         std::cerr << "Failed to send request to server." << std::endl;
@@ -64,6 +72,7 @@ void Employee::viewMenu()
     }
 
     std::string response = serverConnection.readResponse();
+    std::cout << "received response: " << response << std::endl;
     auto [status, dailyMenu] = dataParser->deserializeToDailyMenuEntries(response);
 
     if (status == "STATUS_OK")
@@ -201,5 +210,78 @@ void Employee::checkNotifications()
     else
     {
         std::cout << "Failed to get notifications: " << status << "\n";
+    }
+}
+
+void Employee::updateProfile()
+{
+    std::vector<std::string> dietOptions = {"Vegetarian", "Non Vegetarian", "Eggetarian"};
+    std::vector<std::string> spiceOptions = {"High", "Medium", "Low"};
+    std::vector<std::string> cuisineOptions = {"North Indian", "South Indian", "Other"};
+    std::vector<std::string> sweetOptions = {"Yes", "No"};
+
+    int dietChoice = userInputHandler->getChoiceInput("Select diet type:", dietOptions);
+    int spiceChoice = userInputHandler->getChoiceInput("Select spice level:", spiceOptions);
+    int cuisineChoice = userInputHandler->getChoiceInput("Select cuisine type:", cuisineOptions);
+    int sweetChoice = userInputHandler->getChoiceInput("Do you like sweet:", sweetOptions);
+
+    std::string dietType = dietOptions[dietChoice - 1];
+    std::string spiceLevel = spiceOptions[spiceChoice - 1];
+    std::string cuisineType = cuisineOptions[cuisineChoice - 1];
+    std::string sweetType = sweetOptions[sweetChoice - 1];
+
+    std::string request = "UPDATE_PROFILE," + std::to_string(id) + "," + dietType + "," + spiceLevel + "," + cuisineType + "," + sweetType;
+
+    if (!serverConnection.connectToServer())
+    {
+        std::cerr << "Failed to connect to server." << std::endl;
+        return;
+    }
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Send request failed" << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+    std::cout << "Server response: " << response << std::endl;
+}
+
+void Employee::viewProfile()
+{
+    std::string request = "VIEW_PROFILE," + std::to_string(id);
+
+    if (!serverConnection.connectToServer())
+    {
+        std::cerr << "Failed to connect to server." << std::endl;
+        return;
+    }
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Send request failed" << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+    std::cout << "Server response: " << response << std::endl;
+
+    auto [status, userProfile] = dataParser->deserializeUserProfile(response);
+
+    if (status == "STATUS_OK")
+    {
+        std::cout << "------------------- Profile Information -------------------\n";
+        std::cout << "-----------------------------------------------------------\n";
+        std::cout << "| UserID          | " << std::setw(20) << userProfile.userId << " |\n";
+        std::cout << "| Preference Type | " << std::setw(20) << userProfile.preferenceType << " |\n";
+        std::cout << "| Spice Level     | " << std::setw(20) << userProfile.spiceLevel << " |\n";
+        std::cout << "| Cuisine Pref.   | " << std::setw(20) << userProfile.cuisinePreference << " |\n";
+        std::cout << "| Sweet Tooth     | " << std::setw(20) << userProfile.sweetTooth << " |\n";
+        std::cout << "-----------------------------------------------------------\n";
+    }
+    else
+    {
+        std::cerr << "Failed to retrieve profile information." << std::endl;
     }
 }

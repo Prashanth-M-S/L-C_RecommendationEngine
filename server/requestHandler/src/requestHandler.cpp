@@ -104,8 +104,15 @@ std::string RequestHandler::processRequest(const GeneralRequest &request)
     }
     else if (request.requestType == "MARK_NOTIFICATIONS_VIEWED")
     {
-        printf("Mark notifications viewd requested");
         return handleMarkNotificationsViewed(request.requestData);
+    }
+    else if (request.requestType == "UPDATE_PROFILE")
+    {
+        return handleUpdateProfile(request.requestData);
+    }
+    else if (request.requestType == "VIEW_PROFILE")
+    {
+        return handleViewProfile(request.requestData);
     }
 
     return "UNKNOWN_REQUEST";
@@ -210,10 +217,14 @@ std::string RequestHandler::handleDelUserRequest(const std::string &data)
 std::string RequestHandler::handleAddMenuRequest(const std::string &data)
 {
     std::pair<bool, std::vector<std::string>> addMenuParam = dataParser->deserializeData(data);
-    MenuData menuData;
+    MenuAttributes menuData;
 
     menuData.menuName = addMenuParam.second.at(0);
     menuData.price = std::stod(addMenuParam.second.at(1));
+    menuData.dietType = addMenuParam.second.at(2);
+    menuData.spiceLevel = addMenuParam.second.at(3);
+    menuData.cuisineType = addMenuParam.second.at(4);
+    menuData.sweetType = addMenuParam.second.at(5);
 
     if (addMenuParam.first)
     {
@@ -256,7 +267,7 @@ std::string RequestHandler::handleAddDailyMenuItemRequest(const std::string &dat
     {
         if (database->insertDailyMenuEntries({dailyMenuEntry}))
         {
-            handleNotification("Menu is added");
+            handleNotification("Menu is rolled out");
             return "STATUS_OK,Daily menu item added successfully";
         }
         else
@@ -272,7 +283,8 @@ std::string RequestHandler::handleAddDailyMenuItemRequest(const std::string &dat
 
 std::string RequestHandler::handleGetDailyMenuRequest(const std::string &data)
 {
-    std::vector<GetDailyMenu> items = database->getDailyMenu();
+    int userId = std::stoi(data);
+    std::vector<DailyMenuAttributes> items = recommendationEngine->getRecommendedFoodForUser(userId);
 
     if (items.empty())
     {
@@ -361,4 +373,48 @@ std::string RequestHandler::handleMarkNotificationsViewed(const std::string &dat
     {
         return "STATUS_ERROR,Failed to mark notifications as viewed";
     }
+}
+
+std::string RequestHandler::handleUpdateProfile(const std::string &data)
+{
+    std::pair<bool, std::vector<std::string>> updateProfileParam = dataParser->deserializeData(data);
+    
+    if (updateProfileParam.first)
+    {
+        UserProfile profile;
+        profile.userId = std::stoi(updateProfileParam.second[0]);
+        profile.preferenceType = updateProfileParam.second[1];
+        profile.spiceLevel = updateProfileParam.second[2];
+        profile.cuisinePreference = updateProfileParam.second[3];
+        profile.sweetTooth = updateProfileParam.second[4];
+
+        if (database->updateUserProfile(profile))
+        {
+            return "STATUS_OK,Profile updated successfully";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to update profile";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handleViewProfile(const std::string &data)
+{
+    int userId = std::stoi(data);
+
+    UserProfile userProfile = database->getUserProfile(userId);
+
+    std::string response = "STATUS_OK," +
+                std::to_string(userProfile.userId) + "," +
+                userProfile.preferenceType + "," +
+                userProfile.spiceLevel + "," +
+                userProfile.cuisinePreference + "," +
+                userProfile.sweetTooth;
+
+    return response;
 }

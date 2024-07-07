@@ -138,3 +138,29 @@ std::pair<std::string, std::vector<Notification>> DataParser::deserializeNotific
 
     return result;
 }
+
+std::pair<std::string, UserProfile> DataParser::deserializeUserProfile(const std::string &data)
+{
+    std::istringstream ss(data);
+    std::string status;
+    std::getline(ss, status, ',');
+
+    UserProfile userProfile;
+    if (status == "STATUS_OK")
+    {
+        std::string token;
+
+        std::getline(ss, token, ',');
+        userProfile.userId = std::stoi(token);
+        std::getline(ss, token, ',');
+        userProfile.preferenceType = token;
+        std::getline(ss, token, ',');
+        userProfile.spiceLevel = token;
+        std::getline(ss, token, ',');
+        userProfile.cuisinePreference = token;
+        std::getline(ss, token, ',');
+        userProfile.sweetTooth = token;
+    }
+
+    return {status, userProfile};
+}

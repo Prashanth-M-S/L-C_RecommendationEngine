@@ -90,14 +90,14 @@ std::pair<bool, std::vector<std::string>> DataParser::deserializeData(const std:
     return {true, tokens};
 }
 
-std::string DataParser::serializeData(const std::vector<GetDailyMenu> &items)
+std::string DataParser::serializeData(const std::vector<DailyMenuAttributes> &items)
 {
     std::ostringstream oss;
 
     for (const auto &item : items)
     {
         oss << item.dailyMenuId << ","
-            << item.itemName << ","
+            << item.menuName << ","
             << item.availability << ","
             << item.mealCategory << ","
             << std::fixed << std::setprecision(2) << item.price << ",";
