@@ -16,9 +16,11 @@ public:
     Chef(int id, const std::string &password, ServerConnection &serverConnection);
 
     void mainMenu();
-    void fetchRecommendedFood();
     void rolloutMenu();
-    void viewMenu();
+    std::vector<DailyMenuEntry> viewMenu();
+    void printRecommendedFood(const std::vector<RecommendedMenuData> &recommendedFood);
+    std::vector<RecommendedMenuData>  fetchRecommendedFood();
+    void printDailyMenu(const std::vector<DailyMenuEntry> &dailyMenu);
 
 private:
     ServerConnection &serverConnection;

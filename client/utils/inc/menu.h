@@ -15,6 +15,7 @@ struct RecommendedMenuData : public MenuData
 {
     float recommendationScore;
 
+    RecommendedMenuData(){}
     RecommendedMenuData(int id, const std::string &name, float p, float score)
         : MenuData{id, name, p}, recommendationScore{score} {}
 };
