@@ -10,19 +10,22 @@
 #include "menu.h"
 #include "userInputHandler.h"
 
-
 class Employee
 {
 public:
     Employee(int id, const std::string &password, ServerConnection &serverConnection);
 
     void mainMenu();
-    void viewMenu();
+    // void viewMenu();
     void placeOrder();
     void giveFeedback();
     void checkNotifications();
     void updateProfile();
     void viewProfile();
+    std::vector<DailyMenuEntry> viewMenu();
+    void printDailyMenu(const std::vector<DailyMenuEntry> &dailyMenu);
+    void printNotifications(const std::vector<Notification>& notifications);
+    void printProfile(const UserProfile &userProfile);
 
 private:
     ServerConnection &serverConnection;
@@ -34,6 +37,4 @@ private:
     std::string role;
 };
 
-
-
-#endif 
+#endif
