@@ -116,7 +116,6 @@ std::vector<DailyMenuEntry> Chef::viewMenu()
     }
 
     std::string response = serverConnection.readResponse();
-    std::cout << "Received response: " << response << std::endl;
     auto [status, dailyMenu] = dataParser->deserializeToDailyMenuEntries(response);
 
     if (status == "STATUS_OK")

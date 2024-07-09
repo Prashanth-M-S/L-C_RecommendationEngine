@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <iomanip>
 
 Admin::Admin(int id, const std::string &password, ServerConnection &serverConnection)
     : id(id), password(password), role("admin"), serverConnection(serverConnection)
@@ -23,8 +24,7 @@ void Admin::mainMenu()
         std::cout << "3. Add Menu Item\n";
         std::cout << "4. Delete Menu Item\n";
         std::cout << "5. view recommended Food\n";
-        std::cout << "6. View all Menu Items\n";
-        std::cout << "7. Logout\n\n";
+        std::cout << "6. Logout\n\n";
         choice = userInputHandler->getIntInput("Enter your choice: ");
 
         switch (choice)
@@ -42,11 +42,9 @@ void Admin::mainMenu()
             deleteMenu();
             break;
         case 5:
-            viewAllMenu();
+            viewRecommendedmenu();
             break;
         case 6:
-            viewRecommendedmenu();
-        case 7:
             std::cout << "Logging out...\n";
             return;
         default:
@@ -104,6 +102,7 @@ void Admin::deleteUser()
 
 void Admin::addMenu()
 {
+    viewRecommendedmenu();
     std::string menuName = userInputHandler->getStringInput("Enter menu name: ");
     float menuPrice = userInputHandler->getIntInput("Enter cost: ");
     
@@ -142,6 +141,7 @@ void Admin::addMenu()
 
 void Admin::deleteMenu()
 {
+    viewRecommendedmenu();
     int menuid = userInputHandler->getIntInput("Enter menu ID to delete: ");
     std::string request = "DELETE_MENU," + std::to_string(menuid);
 
@@ -183,19 +183,22 @@ void Admin::viewRecommendedmenu()
 
     if (status == "STATUS_OK")
     {
-        std::cout << "Recommended food:\n";
+        std::cout << "--------------------- Menus ---------------------\n";
+        std::cout << "-------------------------------------------------\n";
+        std::cout << "| ID   | Name                      | Price       |\n";
+        std::cout << "-------------------------------------------------\n";
+
         for (const auto &menu : recommendedFood)
         {
-            std::cout << "ID: " << menu.menuId << ", Name: " << menu.menuName << ", Price: " << menu.price << "\n\n";
+            std::cout << "| " << std::setw(4) << menu.menuId << " | "
+                    << std::setw(24) << std::left << menu.menuName.substr(0, 23) << " | "
+                    << std::setw(10) << std::fixed << std::setprecision(2) << menu.price << " |\n";
         }
+
+        std::cout << "-------------------------------------------------\n";
     }
     else
     {
         std::cout << "Failed to get the food item " << status << "\n";
     }
-}
-
-void Admin::viewAllMenu()
-{
-
 }

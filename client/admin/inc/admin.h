@@ -27,7 +27,6 @@ private:
     void addMenu();
     void deleteMenu();
     void viewRecommendedmenu();
-    void viewAllMenu();
 };
 
 #endif
