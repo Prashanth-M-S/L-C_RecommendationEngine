@@ -26,27 +26,31 @@ std::pair<bool, LoginRequest> DataParser::deserializeLoginRequest(const std::str
 
 std::pair<bool, GeneralRequest> DataParser::deserializeRequest(const std::string &request)
 {
+    std::pair<bool, GeneralRequest> result;
     GeneralRequest generalRequest;
-    size_t pos = request.find(',');
-    if (pos != std::string::npos)
+
+    try
     {
-        generalRequest.requestType = request.substr(0, pos);
-        generalRequest.requestData = request.substr(pos + 1);
+        size_t pos = request.find(',');
+        if (pos != std::string::npos)
+        {
+            generalRequest.requestType = static_cast<RequestType>(std::stoi(request.substr(0, pos)));
+            generalRequest.requestData = request.substr(pos + 1);
+        }
+        else
+        {
+            generalRequest.requestType = static_cast<RequestType>(std::stoi(request));
+            generalRequest.requestData = "";
+        }
+
+        result = std::make_pair(true, generalRequest);
     }
-    else
+    catch (const std::exception &e)
     {
-        generalRequest.requestType = request;
-        generalRequest.requestData = "";
+        result = std::make_pair(false, generalRequest);
     }
 
-    if (!generalRequest.requestType.empty())
-    {
-        return std::make_pair(true, generalRequest);
-    }
-    else
-    {
-        return std::make_pair(false, generalRequest);
-    }
+    return result;
 }
 
 std::pair<bool, std::string> DataParser::deserializeRecommendedMenuData(const std::vector<RecommendedMenuData> &menus)

@@ -4,6 +4,26 @@
 #include <string>
 #include <vector>
 
+enum class RequestType
+{
+    LOGIN,
+    GET_RECOMMENDED_FOOD,
+    ADD_USER,
+    DELETE_USER,
+    ADD_MENU,
+    DELETE_MENU,
+    ROLLOUT_MENU,
+    GET_DAILY_MENU,
+    PLACE_ORDER,
+    ADD_FEEDBACK,
+    GET_NOTIFICATIONS,
+    MARK_NOTIFICATIONS_VIEWED,
+    UPDATE_PROFILE,
+    VIEW_PROFILE,
+    SET_DAILY_MENU_AVAILABILITY_ZERO,
+    UNKNOWN
+};
+
 struct MenuData
 {
     int menuId;

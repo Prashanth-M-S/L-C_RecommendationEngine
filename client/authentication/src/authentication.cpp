@@ -7,7 +7,7 @@ Authentication::Authentication(ServerConnection &serverConn) : serverConn(server
 std::string Authentication::authenticateUser(int userId, const std::string &password)
 {
     std::string role;
-    std::string loginRequest = "LOGIN," + std::to_string(userId) + "," + password;
+    std::string loginRequest = std::to_string((int)RequestType::LOGIN) + "," + std::to_string(userId) + "," + password;
 
     if (!serverConn.connectToServer())
     {

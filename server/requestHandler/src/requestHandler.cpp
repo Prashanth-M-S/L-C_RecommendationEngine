@@ -58,68 +58,61 @@ std::string RequestHandler::readFromSocket(int new_socket)
 
 std::string RequestHandler::processRequest(const GeneralRequest &request)
 {
-    if (request.requestType == "LOGIN")
+    std::string response;
+
+    switch (request.requestType)
     {
-        return handleLoginRequest(request.requestData);
-    }
-    else if (request.requestType == "GET_RECOMMENDED_FOOD")
-    {
-        return handleGetRecommendedFoodRequest();
-    }
-    else if (request.requestType == "ADD_USER")
-    {
-        return handleAddUserRequest(request.requestData);
-    }
-    else if (request.requestType == "DELETE_USER")
-    {
-        return handleDelUserRequest(request.requestData);
-    }
-    else if (request.requestType == "ADD_MENU")
-    {
-        return handleAddMenuRequest(request.requestData);
-    }
-    else if (request.requestType == "DELETE_MENU")
-    {
-        return handleDelMenuRequest(request.requestData);
-    }
-    else if (request.requestType == "ROLLOUT_MENU")
-    {
-        return handleAddDailyMenuItemRequest(request.requestData);
-    }
-    else if (request.requestType == "GET_DAILY_MENU")
-    {
-        return handleGetDailyMenuRequest(request.requestData);
-    }
-    else if (request.requestType == "PLACE_ORDER")
-    {
-        return handlePlaceOrderRequest(request.requestData);
-    }
-    else if (request.requestType == "ADD_FEEDBACK")
-    {
-        return handleAddUserFeedbackRequest(request.requestData);
-    }
-    else if (request.requestType == "GET_NOTIFICATIONS")
-    {
-        return handleGetNotifications(request.requestData);
-    }
-    else if (request.requestType == "MARK_NOTIFICATIONS_VIEWED")
-    {
-        return handleMarkNotificationsViewed(request.requestData);
-    }
-    else if (request.requestType == "UPDATE_PROFILE")
-    {
-        return handleUpdateProfile(request.requestData);
-    }
-    else if (request.requestType == "VIEW_PROFILE")
-    {
-        return handleViewProfile(request.requestData);
-    }
-    else if (request.requestType == "SET_DAILY_MENU_AVAILABILITY_ZERO")
-    {
-        return handleSetDailyMenuAvailabilityToZeroRequest(request.requestData);
+    case RequestType::LOGIN:
+        response = handleLoginRequest(request.requestData);
+        break;
+    case RequestType::GET_RECOMMENDED_FOOD:
+        response = handleGetRecommendedFoodRequest();
+        break;
+    case RequestType::ADD_USER:
+        response = handleAddUserRequest(request.requestData);
+        break;
+    case RequestType::DELETE_USER:
+        response = handleDelUserRequest(request.requestData);
+        break;
+    case RequestType::ADD_MENU:
+        response = handleAddMenuRequest(request.requestData);
+        break;
+    case RequestType::DELETE_MENU:
+        response = handleDelMenuRequest(request.requestData);
+        break;
+    case RequestType::ROLLOUT_MENU:
+        response = handleAddDailyMenuItemRequest(request.requestData);
+        break;
+    case RequestType::GET_DAILY_MENU:
+        response = handleGetDailyMenuRequest(request.requestData);
+        break;
+    case RequestType::PLACE_ORDER:
+        response = handlePlaceOrderRequest(request.requestData);
+        break;
+    case RequestType::ADD_FEEDBACK:
+        response = handleAddUserFeedbackRequest(request.requestData);
+        break;
+    case RequestType::GET_NOTIFICATIONS:
+        response = handleGetNotifications(request.requestData);
+        break;
+    case RequestType::MARK_NOTIFICATIONS_VIEWED:
+        response = handleMarkNotificationsViewed(request.requestData);
+        break;
+    case RequestType::UPDATE_PROFILE:
+        response = handleUpdateProfile(request.requestData);
+        break;
+    case RequestType::VIEW_PROFILE:
+        response = handleViewProfile(request.requestData);
+        break;
+    case RequestType::SET_DAILY_MENU_AVAILABILITY_ZERO:
+        response = handleSetDailyMenuAvailabilityToZeroRequest(request.requestData);
+        break;
+    default:
+        response = std::to_string((int)RequestType::UNKNOWN);
+        break;
     }
 
-    return "UNKNOWN_REQUEST";
+    return response;
 }
 
 std::string RequestHandler::handleLoginRequest(const std::string &data)

@@ -64,7 +64,7 @@ std::pair<std::string, std::vector<DailyMenuEntry>> Employee::fetchDailyMenu()
         return {"Failed to connect to server.", {}};
     }
 
-    std::string request = "GET_DAILY_MENU," + std::to_string(id);
+    std::string request = std::to_string((int)RequestType::GET_DAILY_MENU) + "," + std::to_string(id);
     if (!serverConnection.sendRequest(request))
     {
         return {"Failed to send request to server.", {}};
@@ -115,15 +115,15 @@ void Employee::printDailyMenu(const std::vector<DailyMenuEntry> &dailyMenu)
 void Employee::placeOrder()
 {
     auto dailyMenu = viewMenu();
-    if (dailyMenu.empty()) return;
+    if (dailyMenu.empty())
+        return;
 
     int dailyMenuId;
     while (true)
     {
         dailyMenuId = userInputHandler->getIntInput("Enter ID to order: ");
-        auto it = std::find_if(dailyMenu.begin(), dailyMenu.end(), [dailyMenuId](const DailyMenuEntry &entry) {
-            return entry.dailyMenuId == dailyMenuId;
-        });
+        auto it = std::find_if(dailyMenu.begin(), dailyMenu.end(), [dailyMenuId](const DailyMenuEntry &entry)
+                               { return entry.dailyMenuId == dailyMenuId; });
 
         if (it != dailyMenu.end())
         {
@@ -134,6 +134,7 @@ void Employee::placeOrder()
             else
             {
                 std::cout << "The selected food item is not available.\n";
+                break;
             }
         }
         else
@@ -148,7 +149,7 @@ void Employee::placeOrder()
         return;
     }
 
-    std::string request = "PLACE_ORDER," + std::to_string(id) + "," + std::to_string(dailyMenuId);
+    std::string request = std::to_string((int)RequestType::PLACE_ORDER) + "," + std::to_string(id) + "," + std::to_string(dailyMenuId);
 
     if (!serverConnection.sendRequest(request))
     {
@@ -164,15 +165,15 @@ void Employee::placeOrder()
 void Employee::giveFeedback()
 {
     auto dailyMenu = viewMenu();
-    if (dailyMenu.empty()) return;
+    if (dailyMenu.empty())
+        return;
 
     int dailyMenuId;
     while (true)
     {
         dailyMenuId = userInputHandler->getIntInput("Enter the ID of the menu item to give feedback for: ");
-        auto it = std::find_if(dailyMenu.begin(), dailyMenu.end(), [dailyMenuId](const DailyMenuEntry &entry) {
-            return entry.dailyMenuId == dailyMenuId;
-        });
+        auto it = std::find_if(dailyMenu.begin(), dailyMenu.end(), [dailyMenuId](const DailyMenuEntry &entry)
+                               { return entry.dailyMenuId == dailyMenuId; });
 
         if (it != dailyMenu.end())
         {
@@ -193,7 +194,7 @@ void Employee::giveFeedback()
         return;
     }
 
-    std::string request = "ADD_FEEDBACK," + std::to_string(dailyMenuId) + "," + std::to_string(id) + "," + std::to_string(rating) + "," + comment;
+    std::string request = std::to_string((int)RequestType::ADD_FEEDBACK) + "," + std::to_string(dailyMenuId) + "," + std::to_string(id) + "," + std::to_string(rating) + "," + comment;
 
     if (!serverConnection.sendRequest(request))
     {
@@ -214,7 +215,7 @@ void Employee::checkNotifications()
         return;
     }
 
-    std::string request = "GET_NOTIFICATIONS," + std::to_string(id);
+    std::string request = std::to_string((int)RequestType::GET_NOTIFICATIONS) + "," + std::to_string(id);
 
     if (!serverConnection.sendRequest(request))
     {
@@ -240,7 +241,7 @@ void Employee::checkNotifications()
             {
                 oss << notification.notificationId << ",";
             }
-            std::string markViewedRequest = "MARK_NOTIFICATIONS_VIEWED," + std::to_string(id) + "," + oss.str();
+            std::string markViewedRequest = std::to_string((int)RequestType::MARK_NOTIFICATIONS_VIEWED) + "," + std::to_string(id) + "," + oss.str();
 
             if (!serverConnection.sendRequest(markViewedRequest))
             {
@@ -271,7 +272,7 @@ void Employee::updateProfile()
     std::string cuisineType = cuisineOptions[cuisineChoice - 1];
     std::string sweetType = sweetOptions[sweetChoice - 1];
 
-    std::string request = "UPDATE_PROFILE," + std::to_string(id) + "," + dietType + "," + spiceLevel + "," + cuisineType + "," + sweetType;
+    std::string request = std::to_string((int)RequestType::UPDATE_PROFILE) + "," + std::to_string(id) + "," + dietType + "," + spiceLevel + "," + cuisineType + "," + sweetType;
 
     if (!serverConnection.connectToServer())
     {
@@ -291,7 +292,7 @@ void Employee::updateProfile()
 
 void Employee::viewProfile()
 {
-    std::string request = "VIEW_PROFILE," + std::to_string(id);
+    std::string request = std::to_string((int)RequestType::VIEW_PROFILE) + "," + std::to_string(id);
 
     if (!serverConnection.connectToServer())
     {

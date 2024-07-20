@@ -13,7 +13,7 @@ struct LoginRequest
 
 struct GeneralRequest
 {
-    std::string requestType;
+    RequestType requestType;
     std::string requestData;
 };
 

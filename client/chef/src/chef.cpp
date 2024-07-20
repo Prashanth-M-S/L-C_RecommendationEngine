@@ -54,7 +54,7 @@ std::vector<RecommendedMenuData> Chef::fetchRecommendedFood()
         return {};
     }
 
-    std::string request = "GET_RECOMMENDED_FOOD";
+    std::string request = std::to_string((int)RequestType::GET_RECOMMENDED_FOOD);
     if (!serverConnection.sendRequest(request))
     {
         std::cerr << "Failed to send request to server." << std::endl;
@@ -86,7 +86,7 @@ void Chef::rolloutMenu()
     int available = 1;
     std::string category = userInputHandler->getStringInput("Enter category: ");
 
-    std::string request = "ROLLOUT_MENU," + std::to_string(menuId) + "," + std::to_string(available) + "," + category;
+    std::string request = std::to_string((int)RequestType::ROLLOUT_MENU) + "," + std::to_string(menuId) + "," + std::to_string(available) + "," + category;
 
     if (!serverConnection.connectToServer())
     {
@@ -113,7 +113,7 @@ std::vector<DailyMenuEntry> Chef::viewMenu()
         return {};
     }
 
-    std::string request = "GET_DAILY_MENU," + std::to_string(id);
+    std::string request = std::to_string((int)RequestType::GET_DAILY_MENU) + "," + std::to_string(id);
     if (!serverConnection.sendRequest(request))
     {
         std::cerr << "Failed to send request to server." << std::endl;
@@ -203,7 +203,7 @@ void Chef::setMenuAvailabilityToZero()
         return;
     }
 
-    std::string request = "SET_DAILY_MENU_AVAILABILITY_ZERO," + std::to_string(dailyMenuId);
+    std::string request = std::to_string((int)RequestType::SET_DAILY_MENU_AVAILABILITY_ZERO) + "," + std::to_string(dailyMenuId);
 
     if (!serverConnection.sendRequest(request))
     {
