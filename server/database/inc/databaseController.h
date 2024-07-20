@@ -38,7 +38,8 @@ public:
     std::vector<DailyMenuAttributes> getDailyMenuWithAttributes();
     bool updateUserProfile(const UserProfile &profile);
     UserProfile getUserProfile(int userId);
-    
+    bool setDailyMenuAvailabilityToZero(int dailyMenuId);
+
 private:
     void connect();
 

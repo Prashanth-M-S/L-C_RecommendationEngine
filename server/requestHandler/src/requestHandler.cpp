@@ -114,6 +114,10 @@ std::string RequestHandler::processRequest(const GeneralRequest &request)
     {
         return handleViewProfile(request.requestData);
     }
+    else if (request.requestType == "SET_DAILY_MENU_AVAILABILITY_ZERO")
+    {
+        return handleSetDailyMenuAvailabilityToZeroRequest(request.requestData);
+    }
 
     return "UNKNOWN_REQUEST";
 }
@@ -288,7 +292,7 @@ std::string RequestHandler::handleGetDailyMenuRequest(const std::string &data)
 
     if (items.empty())
     {
-        return "STATUS_ERROR,NO_DAILY_MENU_ITEMS";
+        return "STATUS_OK,";
     }
 
     return "STATUS_OK," + dataParser->serializeData(items);
@@ -378,7 +382,7 @@ std::string RequestHandler::handleMarkNotificationsViewed(const std::string &dat
 std::string RequestHandler::handleUpdateProfile(const std::string &data)
 {
     std::pair<bool, std::vector<std::string>> updateProfileParam = dataParser->deserializeData(data);
-    
+
     if (updateProfileParam.first)
     {
         UserProfile profile;
@@ -410,11 +414,34 @@ std::string RequestHandler::handleViewProfile(const std::string &data)
     UserProfile userProfile = database->getUserProfile(userId);
 
     std::string response = "STATUS_OK," +
-                std::to_string(userProfile.userId) + "," +
-                userProfile.preferenceType + "," +
-                userProfile.spiceLevel + "," +
-                userProfile.cuisinePreference + "," +
-                userProfile.sweetTooth;
+                           std::to_string(userProfile.userId) + "," +
+                           userProfile.preferenceType + "," +
+                           userProfile.spiceLevel + "," +
+                           userProfile.cuisinePreference + "," +
+                           userProfile.sweetTooth;
 
     return response;
+}
+
+std::string RequestHandler::handleSetDailyMenuAvailabilityToZeroRequest(const std::string &data)
+{
+    std::pair<bool, std::vector<std::string>> setAvailabilityParam = dataParser->deserializeData(data);
+
+    if (setAvailabilityParam.first && setAvailabilityParam.second.size() == 1)
+    {
+        int dailyMenuId = std::stoi(setAvailabilityParam.second.at(0));
+
+        if (database->setDailyMenuAvailabilityToZero(dailyMenuId))
+        {
+            return "STATUS_OK,Daily menu availability set to zero";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to set daily menu availability to zero";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
 }

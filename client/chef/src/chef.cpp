@@ -1,5 +1,6 @@
 #include "chef.h"
 #include <iomanip>
+#include <algorithm>
 
 Chef::Chef(int id, const std::string &password, ServerConnection &serverConnection)
     : id(id), password(password), role("chef"), serverConnection(serverConnection)
@@ -17,7 +18,8 @@ void Chef::mainMenu()
         std::cout << "\n1. Fetch Recommended Food\n";
         std::cout << "2. Rollout Menu\n";
         std::cout << "3. View Current Menu\n";
-        std::cout << "4. Logout\n\n";
+        std::cout << "4. set menu availability to Zero\n";
+        std::cout << "5. Logout\n\n";
         choice = userInputHandler->getIntInput("Enter your choice: ");
 
         switch (choice)
@@ -32,12 +34,15 @@ void Chef::mainMenu()
             viewMenu();
             break;
         case 4:
+            setMenuAvailabilityToZero();
+            break;
+        case 5:
             std::cout << "Logging out...\n";
             break;
         default:
             std::cout << "Invalid choice. Please try again.\n";
         }
-    } while (choice != 4);
+    } while (choice != 5);
 }
 
 std::vector<RecommendedMenuData> Chef::fetchRecommendedFood()
@@ -167,4 +172,46 @@ void Chef::printDailyMenu(const std::vector<DailyMenuEntry> &dailyMenu)
     }
 
     std::cout << "------------------------------------------------------------------\n";
+}
+
+void Chef::setMenuAvailabilityToZero()
+{
+    auto dailyMenu = viewMenu();
+    if (dailyMenu.empty())
+        return;
+
+    int dailyMenuId;
+    while (true)
+    {
+        dailyMenuId = userInputHandler->getIntInput("Enter ID to set availability to zero: ");
+        auto it = std::find_if(dailyMenu.begin(), dailyMenu.end(), [dailyMenuId](const DailyMenuEntry &entry)
+                               { return entry.dailyMenuId == dailyMenuId; });
+
+        if (it != dailyMenu.end())
+        {
+            break;
+        }
+        else
+        {
+            std::cout << "Invalid menu ID. Please enter a valid ID from the menu.\n";
+        }
+    }
+
+    if (!serverConnection.connectToServer())
+    {
+        std::cout << "Failed to connect to server." << std::endl;
+        return;
+    }
+
+    std::string request = "SET_DAILY_MENU_AVAILABILITY_ZERO," + std::to_string(dailyMenuId);
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Failed to send request to server." << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+
+    std::cout << response << std::endl;
 }

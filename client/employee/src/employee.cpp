@@ -57,34 +57,59 @@ void Employee::mainMenu()
     } while (choice != 7);
 }
 
-std::vector<DailyMenuEntry> Employee::viewMenu()
+std::pair<std::string, std::vector<DailyMenuEntry>> Employee::fetchDailyMenu()
 {
     if (!serverConnection.connectToServer())
     {
-        std::cout << "Failed to connect to server." << std::endl;
-        return {};
+        return {"Failed to connect to server.", {}};
     }
 
     std::string request = "GET_DAILY_MENU," + std::to_string(id);
     if (!serverConnection.sendRequest(request))
     {
-        std::cerr << "Failed to send request to server." << std::endl;
-        return {};
+        return {"Failed to send request to server.", {}};
     }
 
     std::string response = serverConnection.readResponse();
     auto [status, dailyMenu] = dataParser->deserializeToDailyMenuEntries(response);
 
+    return {status, dailyMenu};
+}
+
+std::vector<DailyMenuEntry> Employee::viewMenu()
+{
+    auto [status, dailyMenu] = fetchDailyMenu();
+
     if (status == "STATUS_OK")
     {
         printDailyMenu(dailyMenu);
-        return dailyMenu;
     }
     else
     {
         std::cout << "Failed to get the daily menu items: " << status << "\n";
-        return {};
     }
+
+    return dailyMenu;
+}
+
+void Employee::printDailyMenu(const std::vector<DailyMenuEntry> &dailyMenu)
+{
+    std::cout << "----- Daily Menu ------\n";
+    std::cout << "------------------------------------------------------------------\n";
+    std::cout << "| ID   | Name                | Availability | Category   | Price  |\n";
+    std::cout << "------------------------------------------------------------------\n";
+
+    for (const auto &menu : dailyMenu)
+    {
+        std::cout << "| "
+                  << std::setw(4) << menu.dailyMenuId << " | "
+                  << std::setw(19) << menu.itemName << " | "
+                  << std::setw(12) << menu.availability << " | "
+                  << std::setw(10) << menu.mealCategory << " | "
+                  << std::setw(6) << std::fixed << std::setprecision(2) << menu.price << " |\n";
+    }
+
+    std::cout << "------------------------------------------------------------------\n";
 }
 
 void Employee::placeOrder()
@@ -102,7 +127,14 @@ void Employee::placeOrder()
 
         if (it != dailyMenu.end())
         {
-            break;
+            if (it->availability > 0)
+            {
+                break;
+            }
+            else
+            {
+                std::cout << "The selected food item is not available.\n";
+            }
         }
         else
         {
@@ -128,7 +160,6 @@ void Employee::placeOrder()
 
     std::cout << response << std::endl;
 }
-
 
 void Employee::giveFeedback()
 {
@@ -287,26 +318,6 @@ void Employee::viewProfile()
     {
         std::cerr << "Failed to retrieve profile information." << std::endl;
     }
-}
-
-void Employee::printDailyMenu(const std::vector<DailyMenuEntry> &dailyMenu)
-{
-    std::cout << "----- Daily Menu ------\n";
-    std::cout << "------------------------------------------------------------------\n";
-    std::cout << "| ID   | Name                | Availability | Category   | Price  |\n";
-    std::cout << "------------------------------------------------------------------\n";
-
-    for (const auto &menu : dailyMenu)
-    {
-        std::cout << "| "
-                  << std::setw(4) << menu.dailyMenuId << " | "
-                  << std::setw(19) << menu.itemName << " | "
-                  << std::setw(12) << menu.availability << " | "
-                  << std::setw(10) << menu.mealCategory << " | "
-                  << std::setw(6) << std::fixed << std::setprecision(2) << menu.price << " |\n";
-    }
-
-    std::cout << "------------------------------------------------------------------\n";
 }
 
 void Employee::printProfile(const UserProfile &userProfile)

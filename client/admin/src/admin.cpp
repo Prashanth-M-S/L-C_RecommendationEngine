@@ -24,7 +24,8 @@ void Admin::mainMenu()
         std::cout << "3. Add Menu Item\n";
         std::cout << "4. Delete Menu Item\n";
         std::cout << "5. view recommended Food\n";
-        std::cout << "6. Logout\n\n";
+        std::cout << "6. view rolledout Menu\n";
+        std::cout << "7. Logout\n\n";
         choice = userInputHandler->getIntInput("Enter your choice: ");
 
         switch (choice)
@@ -45,12 +46,15 @@ void Admin::mainMenu()
             viewRecommendedmenu();
             break;
         case 6:
+            viewMenu();
+            break;
+        case 7:
             std::cout << "Logging out...\n";
             return;
         default:
             std::cout << "Invalid choice. Please try again.\n";
         }
-    } while (choice != 6);
+    } while (choice != 7);
 }
 
 void Admin::addUser()
@@ -105,7 +109,7 @@ void Admin::addMenu()
     viewRecommendedmenu();
     std::string menuName = userInputHandler->getStringInput("Enter menu name: ");
     float menuPrice = userInputHandler->getIntInput("Enter cost: ");
-    
+
     std::vector<std::string> dietOptions = {"Vegetarian", "Non Vegetarian", "Eggetarian"};
     std::vector<std::string> spiceOptions = {"High", "Medium", "Low", "None"};
     std::vector<std::string> cuisineOptions = {"North Indian", "South Indian", "Other"};
@@ -161,8 +165,6 @@ void Admin::deleteMenu()
     std::cout << "server response: " << response << std::endl;
 }
 
-
-
 void Admin::viewRecommendedmenu()
 {
     if (!serverConnection.connectToServer())
@@ -191,8 +193,8 @@ void Admin::viewRecommendedmenu()
         for (const auto &menu : recommendedFood)
         {
             std::cout << "| " << std::setw(4) << menu.menuId << " | "
-                    << std::setw(24) << std::left << menu.menuName.substr(0, 23) << " | "
-                    << std::setw(10) << std::fixed << std::setprecision(2) << menu.price << " |\n";
+                      << std::setw(24) << std::left << menu.menuName.substr(0, 23) << " | "
+                      << std::setw(10) << std::fixed << std::setprecision(2) << menu.price << " |\n";
         }
 
         std::cout << "-------------------------------------------------\n";
@@ -201,4 +203,59 @@ void Admin::viewRecommendedmenu()
     {
         std::cout << "Failed to get the food item " << status << "\n";
     }
+}
+
+std::pair<std::string, std::vector<DailyMenuEntry>> Admin::fetchDailyMenu()
+{
+    if (!serverConnection.connectToServer())
+    {
+        return {"Failed to connect to server.", {}};
+    }
+
+    std::string request = "GET_DAILY_MENU," + std::to_string(id);
+    if (!serverConnection.sendRequest(request))
+    {
+        return {"Failed to send request to server.", {}};
+    }
+
+    std::string response = serverConnection.readResponse();
+    auto [status, dailyMenu] = dataParser->deserializeToDailyMenuEntries(response);
+
+    return {status, dailyMenu};
+}
+
+std::vector<DailyMenuEntry> Admin::viewMenu()
+{
+    auto [status, dailyMenu] = fetchDailyMenu();
+
+    if (status == "STATUS_OK")
+    {
+        printDailyMenu(dailyMenu);
+    }
+    else
+    {
+        std::cout << "Failed to get the daily menu items: " << status << "\n";
+    }
+
+    return dailyMenu;
+}
+
+void Admin::printDailyMenu(const std::vector<DailyMenuEntry> &dailyMenu)
+{
+    std::cout << "----- Daily Menu ------\n";
+    std::cout << "------------------------------------------------------------------\n";
+    std::cout << "| ID   | Name                | Availability | Category   | Price  |\n";
+    std::cout << "------------------------------------------------------------------\n";
+
+    for (const auto &menu : dailyMenu)
+    {
+        std::cout << "| "
+                  << std::setw(4) << menu.dailyMenuId << " | "
+                  << std::setw(19) << menu.itemName << " | "
+                  << std::setw(12) << menu.availability << " | "
+                  << std::setw(10) << menu.mealCategory << " | "
+                  << std::setw(6) << std::fixed << std::setprecision(2) << menu.price << " |\n";
+    }
+
+    std::cout << "------------------------------------------------------------------\n";
 }

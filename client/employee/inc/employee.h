@@ -16,7 +16,6 @@ public:
     Employee(int id, const std::string &password, ServerConnection &serverConnection);
 
     void mainMenu();
-    // void viewMenu();
     void placeOrder();
     void giveFeedback();
     void checkNotifications();
@@ -26,6 +25,7 @@ public:
     void printDailyMenu(const std::vector<DailyMenuEntry> &dailyMenu);
     void printNotifications(const std::vector<Notification>& notifications);
     void printProfile(const UserProfile &userProfile);
+    std::pair<std::string, std::vector<DailyMenuEntry>> fetchDailyMenu();
 
 private:
     ServerConnection &serverConnection;

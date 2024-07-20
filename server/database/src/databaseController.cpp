@@ -571,3 +571,23 @@ UserProfile DatabaseController::getUserProfile(int userId)
 
     return userProfile;
 }
+
+bool DatabaseController::setDailyMenuAvailabilityToZero(int dailyMenuId)
+{
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement("UPDATE dailyMenu SET availability = 0 WHERE dailyMenuId = ?"));
+
+        preparedStatement->setInt(1, dailyMenuId);
+        preparedStatement->executeUpdate();
+
+        return true;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "DatabaseController::setDailyMenuAvailabilityToZero() SQLException: " << e.what() << "\n";
+    }
+
+    return false;
+}

@@ -27,6 +27,9 @@ private:
     void addMenu();
     void deleteMenu();
     void viewRecommendedmenu();
+    std::pair<std::string, std::vector<DailyMenuEntry>> fetchDailyMenu();
+    std::vector<DailyMenuEntry> viewMenu();
+    void printDailyMenu(const std::vector<DailyMenuEntry> &dailyMenu);
 };
 
 #endif

@@ -7,7 +7,7 @@
 #include "dataParser.h"
 #include <memory>
 
-class RequestHandler : public IRequestHandler 
+class RequestHandler : public IRequestHandler
 {
 public:
     RequestHandler(std::shared_ptr<IDatabaseController> database, std::shared_ptr<IRecommendationEngine> recommendationEngine);
@@ -16,7 +16,7 @@ public:
 private:
     std::shared_ptr<IDatabaseController> database;
     std::shared_ptr<IRecommendationEngine> recommendationEngine;
-    std::shared_ptr<DataParser> dataParser; 
+    std::shared_ptr<DataParser> dataParser;
 
     std::string readFromSocket(int new_socket);
     std::string processRequest(const GeneralRequest &request);
@@ -35,6 +35,7 @@ private:
     std::string handleMarkNotificationsViewed(const std::string &data);
     std::string handleUpdateProfile(const std::string &data);
     std::string handleViewProfile(const std::string &data);
+    std::string handleSetDailyMenuAvailabilityToZeroRequest(const std::string &data);
 };
 
-#endif 
+#endif
