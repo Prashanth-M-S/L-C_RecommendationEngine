@@ -28,12 +28,27 @@ std::vector<RecommendedMenuData> RecommendationEngine::getRecommendedFood()
         recommendedMenus.push_back(RecommendedMenuData(menu.menuId, menu.menuName, menu.price, recommendationScore));
     }
 
+    std::sort(recommendedMenus.begin(), recommendedMenus.end(), [](const RecommendedMenuData &a, const RecommendedMenuData &b)
+              { return a.recommendationScore > b.recommendationScore; });
+
     return recommendedMenus;
+}
+
+std::string cleanString(const std::string &input)
+{
+    std::string cleaned;
+    std::remove_copy_if(input.begin(), input.end(), std::back_inserter(cleaned),
+                        [](char c) { return std::ispunct(c) && c != '\''; });
+
+    std::transform(cleaned.begin(), cleaned.end(), cleaned.begin(), ::tolower);
+
+    return cleaned;
 }
 
 float RecommendationEngine::calculateSentimentScore(const std::string &feedback)
 {
-    std::istringstream inputStream(feedback);
+    std::string cleanedFeedback = cleanString(feedback);
+    std::istringstream inputStream(cleanedFeedback);
     std::string word;
 
     int totalWords = 0;
