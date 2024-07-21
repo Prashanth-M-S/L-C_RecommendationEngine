@@ -94,6 +94,11 @@ std::vector<DailyMenuEntry> Employee::viewMenu()
 
 void Employee::printDailyMenu(const std::vector<DailyMenuEntry> &dailyMenu)
 {
+    if (dailyMenu.empty())
+    {
+        std::cout << "\nNo daily menu items available.\n\n";
+        return;
+    }
     std::cout << "----- Daily Menu ------\n";
     std::cout << "------------------------------------------------------------------\n";
     std::cout << "| ID   | Name                | Availability | Category   | Price  |\n";
