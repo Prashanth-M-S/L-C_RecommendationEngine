@@ -22,6 +22,8 @@ public:
     std::vector<RecommendedMenuData>  fetchRecommendedFood();
     void printDailyMenu(const std::vector<DailyMenuEntry> &dailyMenu);
     void setMenuAvailabilityToZero();
+    void fetchMenuFeedbacks();
+    void deleteMenuItem();
 
 private:
     ServerConnection &serverConnection;

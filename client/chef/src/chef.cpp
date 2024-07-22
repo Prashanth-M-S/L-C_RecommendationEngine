@@ -1,5 +1,6 @@
 #include "chef.h"
 #include <iomanip>
+#include <sstream>
 #include <algorithm>
 
 Chef::Chef(int id, const std::string &password, ServerConnection &serverConnection)
@@ -14,12 +15,14 @@ void Chef::mainMenu()
     int choice;
     do
     {
-        std::cout << "---------Main Menu---------\n";
+        std::cout << "\n---------Main Menu---------\n";
         std::cout << "\n1. Fetch Recommended Food\n";
         std::cout << "2. Rollout Menu\n";
         std::cout << "3. View Current Menu\n";
         std::cout << "4. set menu availability to Zero\n";
-        std::cout << "5. Logout\n\n";
+        std::cout << "5. get menu feedback\n";
+        std::cout << "6. delete menu\n";
+        std::cout << "7. Logout\n\n";
         choice = userInputHandler->getIntInput("Enter your choice: ");
 
         switch (choice)
@@ -37,22 +40,23 @@ void Chef::mainMenu()
             setMenuAvailabilityToZero();
             break;
         case 5:
+            fetchMenuFeedbacks();
+            break;
+        case 6:
+            deleteMenuItem();
+            break;
+        case 7:
             std::cout << "Logging out...\n";
             break;
         default:
             std::cout << "Invalid choice. Please try again.\n";
         }
-    } while (choice != 5);
+    } while (choice != 7);
 }
 
 std::vector<RecommendedMenuData> Chef::fetchRecommendedFood()
 {
     std::vector<RecommendedMenuData> recommendedMenuData;
-    if (!serverConnection.connectToServer())
-    {
-        std::cout << "Failed to connect to server." << std::endl;
-        return {};
-    }
 
     std::string request = std::to_string((int)RequestType::GET_RECOMMENDED_FOOD);
     if (!serverConnection.sendRequest(request))
@@ -82,17 +86,29 @@ void Chef::rolloutMenu()
     if (recommendedFood.empty())
         return;
 
-    int menuId = userInputHandler->getIntInput("Enter menu ID to roll out: ");
+    int menuId;
+    while (true)
+    {
+        menuId = userInputHandler->getIntInput("Enter menu ID to roll out: ");
+        auto it = std::find_if(recommendedFood.begin(), recommendedFood.end(), [menuId](const RecommendedMenuData &menu)
+                               { return menu.menuId == menuId; });
+
+        if (it != recommendedFood.end())
+        {
+            break;
+        }
+        else
+        {
+            std::cerr << "Invalid menu ID. Please enter a valid menu ID from the recommended food list." << std::endl;
+        }
+    }
+
     int available = 1;
-    std::string category = userInputHandler->getStringInput("Enter category: ");
+    std::vector<std::string> categoryOptions = {"breakfast", "lunch", "dinner"};
+    int selectedCategory = userInputHandler->getChoiceInput("Select diet type:", categoryOptions);
+    std::string category = categoryOptions[selectedCategory - 1];
 
     std::string request = std::to_string((int)RequestType::ROLLOUT_MENU) + "," + std::to_string(menuId) + "," + std::to_string(available) + "," + category;
-
-    if (!serverConnection.connectToServer())
-    {
-        std::cerr << "Failed to connect to server." << std::endl;
-        return;
-    }
 
     if (!serverConnection.sendRequest(request))
     {
@@ -107,12 +123,6 @@ void Chef::rolloutMenu()
 
 std::vector<DailyMenuEntry> Chef::viewMenu()
 {
-    if (!serverConnection.connectToServer())
-    {
-        std::cout << "Failed to connect to server." << std::endl;
-        return {};
-    }
-
     std::string request = std::to_string((int)RequestType::GET_DAILY_MENU) + "," + std::to_string(id);
     if (!serverConnection.sendRequest(request))
     {
@@ -197,12 +207,6 @@ void Chef::setMenuAvailabilityToZero()
         }
     }
 
-    if (!serverConnection.connectToServer())
-    {
-        std::cout << "Failed to connect to server." << std::endl;
-        return;
-    }
-
     std::string request = std::to_string((int)RequestType::SET_DAILY_MENU_AVAILABILITY_ZERO) + "," + std::to_string(dailyMenuId);
 
     if (!serverConnection.sendRequest(request))
@@ -214,4 +218,100 @@ void Chef::setMenuAvailabilityToZero()
     std::string response = serverConnection.readResponse();
 
     std::cout << response << std::endl;
+}
+
+void Chef::fetchMenuFeedbacks()
+{
+    auto recommendedFood = fetchRecommendedFood();
+    if (recommendedFood.empty())
+        return;
+
+    int menuId;
+    while (true)
+    {
+        menuId = userInputHandler->getIntInput("Enter menu ID to see the feedback: ");
+        auto it = std::find_if(recommendedFood.begin(), recommendedFood.end(), [menuId](const RecommendedMenuData &menu)
+                               { return menu.menuId == menuId; });
+
+        if (it != recommendedFood.end())
+        {
+            break;
+        }
+        else
+        {
+            std::cerr << "Invalid menu ID. Please enter a valid menu ID from the recommended food list." << std::endl;
+        }
+    }
+
+    std::string request = std::to_string(static_cast<int>(RequestType::FETCH_FEEDBACK)) + "," + std::to_string(menuId);
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Failed to send request to server." << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+    std::istringstream responseStream(response);
+    std::string status;
+    std::getline(responseStream, status, '|');
+
+    if (status != "STATUS_OK")
+    {
+        std::cerr << "Failed to fetch feedbacks: " << status << std::endl;
+        return;
+    }
+
+    std::cout << "\n-----------------------------------------" << std::endl;
+    std::string date, rating, comment;
+    bool hasFeedback = false;
+    while (std::getline(responseStream, date, '|') &&
+           std::getline(responseStream, rating, '|') &&
+           std::getline(responseStream, comment, '|'))
+    {
+        hasFeedback = true;
+        std::cout << "Date: " << date << ", Rating: " << rating
+                  << ", Comment: " << comment << std::endl;
+    }
+
+    if (!hasFeedback)
+    {
+        std::cout << "No feedback available for this menu item." << std::endl;
+    }
+    std::cout << "-----------------------------------------\n\n";
+}
+
+void Chef::deleteMenuItem()
+{
+    auto recommendedFood = fetchRecommendedFood();
+    if (recommendedFood.empty())
+        return;
+
+    int menuId;
+    while (true)
+    {
+        menuId = userInputHandler->getIntInput("Enter menu ID to see the feedback: ");
+        auto it = std::find_if(recommendedFood.begin(), recommendedFood.end(), [menuId](const RecommendedMenuData &menu)
+                               { return menu.menuId == menuId; });
+
+        if (it != recommendedFood.end())
+        {
+            break;
+        }
+        else
+        {
+            std::cerr << "Invalid menu ID. Please enter a valid menu ID from the recommended food list." << std::endl;
+        }
+    }
+
+    std::string request = std::to_string((int)RequestType::DELETE_MENU) + "," + std::to_string(menuId);
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Send request failed" << std::endl;
+        return;
+    }
+    std::string response = serverConnection.readResponse();
+
+    std::cout << "server response: " << response << std::endl;
 }

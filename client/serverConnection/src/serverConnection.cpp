@@ -48,6 +48,11 @@ int ServerConnection::getSocket() const
 
 bool ServerConnection::sendRequest(const std::string &request)
 {
+    if (!connectToServer())
+    {
+        perror("ServerConnection::sendRequest failed to connect to server");
+    }
+
     if (send(sock, request.c_str(), request.size(), 0) < 0)
     {
         perror("Send request failed");

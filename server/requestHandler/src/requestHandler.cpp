@@ -107,6 +107,9 @@ std::string RequestHandler::processRequest(const GeneralRequest &request)
     case RequestType::SET_DAILY_MENU_AVAILABILITY_ZERO:
         response = handleSetDailyMenuAvailabilityToZeroRequest(request.requestData);
         break;
+    case RequestType::FETCH_FEEDBACK:
+        response = handleFetchFeedback(request.requestData);
+        break;
     default:
         response = std::to_string((int)RequestType::UNKNOWN);
         break;
@@ -437,4 +440,31 @@ std::string RequestHandler::handleSetDailyMenuAvailabilityToZeroRequest(const st
     {
         return "STATUS_ERROR,Invalid request format";
     }
+}
+
+std::string RequestHandler::handleFetchFeedback(const std::string &data)
+{
+    std::string response = "STATUS_OK";
+    try
+    {
+        int menuId = std::stoi(data);
+
+        Menu menu;
+        menu.menuId = menuId;
+
+        database->fetchFeedbacks(menu);
+
+        for (auto &feedback : menu.feedbacks)
+        {
+            response += "|" + feedback.feedbackDate +
+                        "|" + std::to_string(feedback.rating) +
+                        "|" + feedback.comment;
+        }
+    }
+    catch (const std::invalid_argument &e)
+    {
+        response = "STATUS_ERROR";
+    }
+
+    return response;
 }

@@ -59,11 +59,6 @@ void Employee::mainMenu()
 
 std::pair<std::string, std::vector<DailyMenuEntry>> Employee::fetchDailyMenu()
 {
-    if (!serverConnection.connectToServer())
-    {
-        return {"Failed to connect to server.", {}};
-    }
-
     std::string request = std::to_string((int)RequestType::GET_DAILY_MENU) + "," + std::to_string(id);
     if (!serverConnection.sendRequest(request))
     {
@@ -148,12 +143,6 @@ void Employee::placeOrder()
         }
     }
 
-    if (!serverConnection.connectToServer())
-    {
-        std::cout << "Failed to connect to server." << std::endl;
-        return;
-    }
-
     std::string request = std::to_string((int)RequestType::PLACE_ORDER) + "," + std::to_string(id) + "," + std::to_string(dailyMenuId);
 
     if (!serverConnection.sendRequest(request))
@@ -193,12 +182,6 @@ void Employee::giveFeedback()
     float rating = userInputHandler->getFoodRatingInput("Enter your rating (0 to 5): ");
     std::string comment = userInputHandler->getStringInput("Enter your comment: ");
 
-    if (!serverConnection.connectToServer())
-    {
-        std::cout << "Failed to connect to server." << std::endl;
-        return;
-    }
-
     std::string request = std::to_string((int)RequestType::ADD_FEEDBACK) + "," + std::to_string(dailyMenuId) + "," + std::to_string(id) + "," + std::to_string(rating) + "," + comment;
 
     if (!serverConnection.sendRequest(request))
@@ -214,12 +197,6 @@ void Employee::giveFeedback()
 
 void Employee::checkNotifications()
 {
-    if (!serverConnection.connectToServer())
-    {
-        std::cout << "Failed to connect to server." << std::endl;
-        return;
-    }
-
     std::string request = std::to_string((int)RequestType::GET_NOTIFICATIONS) + "," + std::to_string(id);
 
     if (!serverConnection.sendRequest(request))
@@ -279,12 +256,6 @@ void Employee::updateProfile()
 
     std::string request = std::to_string((int)RequestType::UPDATE_PROFILE) + "," + std::to_string(id) + "," + dietType + "," + spiceLevel + "," + cuisineType + "," + sweetType;
 
-    if (!serverConnection.connectToServer())
-    {
-        std::cerr << "Failed to connect to server." << std::endl;
-        return;
-    }
-
     if (!serverConnection.sendRequest(request))
     {
         std::cerr << "Send request failed" << std::endl;
@@ -298,12 +269,6 @@ void Employee::updateProfile()
 void Employee::viewProfile()
 {
     std::string request = std::to_string((int)RequestType::VIEW_PROFILE) + "," + std::to_string(id);
-
-    if (!serverConnection.connectToServer())
-    {
-        std::cerr << "Failed to connect to server." << std::endl;
-        return;
-    }
 
     if (!serverConnection.sendRequest(request))
     {

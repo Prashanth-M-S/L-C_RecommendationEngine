@@ -11,6 +11,7 @@ public:
     virtual ~IDatabaseController(){};
     virtual std::vector<Menu> fetchMenusWithFeedback() = 0;
     virtual std::vector<Menu> fetchMenus() = 0;
+    virtual void fetchFeedbacks(Menu &menu) = 0;
     virtual std::string authenticateUser(int userId, const std::string &password) = 0;
     virtual bool addUser(const User &user) = 0;
     virtual bool deleteUser(int userId) = 0;

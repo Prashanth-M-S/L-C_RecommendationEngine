@@ -66,12 +66,6 @@ void Admin::addUser()
 
     std::string request = std::to_string((int)RequestType::ADD_USER) + "," + std::to_string(userId) + "," + username + "," + password + "," + role;
 
-    if (!serverConnection.connectToServer())
-    {
-        std::cerr << "Failed to connect to server." << std::endl;
-        return;
-    }
-
     if (!serverConnection.sendRequest(request))
     {
         std::cerr << "Send request failed" << std::endl;
@@ -86,11 +80,6 @@ void Admin::deleteUser()
 {
     int userIdToDelet = userInputHandler->getIntInput("Enter user ID that you want to delete: ");
 
-    if (!serverConnection.connectToServer())
-    {
-        std::cerr << "Failed to connect to server." << std::endl;
-        return;
-    }
     std::string request = std::to_string((int)RequestType::DELETE_USER) + "," + std::to_string(id) + "," + std::to_string(userIdToDelet);
 
     if (!serverConnection.sendRequest(request))
@@ -127,12 +116,6 @@ void Admin::addMenu()
 
     std::string request = std::to_string((int)RequestType::ADD_MENU) + "," + menuName + "," + std::to_string(menuPrice) + "," + dietType + "," + spiceLevel + "," + cuisineType + "," + sweetType;
 
-    if (!serverConnection.connectToServer())
-    {
-        std::cerr << "Failed to connect to server." << std::endl;
-        return;
-    }
-
     if (!serverConnection.sendRequest(request))
     {
         std::cerr << "Send request failed" << std::endl;
@@ -149,12 +132,6 @@ void Admin::deleteMenu()
     int menuid = userInputHandler->getIntInput("Enter menu ID to delete: ");
     std::string request = std::to_string((int)RequestType::DELETE_MENU) + "," + std::to_string(menuid);
 
-    if (!serverConnection.connectToServer())
-    {
-        std::cerr << "Failed to connect to server." << std::endl;
-        return;
-    }
-
     if (!serverConnection.sendRequest(request))
     {
         std::cerr << "Send request failed" << std::endl;
@@ -167,12 +144,6 @@ void Admin::deleteMenu()
 
 void Admin::viewRecommendedmenu()
 {
-    if (!serverConnection.connectToServer())
-    {
-        std::cout << "Failed to connect to server." << std::endl;
-        return;
-    }
-
     std::string request = std::to_string((int)RequestType::GET_RECOMMENDED_FOOD);
     if (!serverConnection.sendRequest(request))
     {
@@ -207,11 +178,6 @@ void Admin::viewRecommendedmenu()
 
 std::pair<std::string, std::vector<DailyMenuEntry>> Admin::fetchDailyMenu()
 {
-    if (!serverConnection.connectToServer())
-    {
-        return {"Failed to connect to server.", {}};
-    }
-
     std::string request = std::to_string((int)RequestType::GET_DAILY_MENU) + "," + std::to_string(id);
     if (!serverConnection.sendRequest(request))
     {

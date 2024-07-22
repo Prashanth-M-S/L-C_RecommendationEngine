@@ -21,6 +21,7 @@ enum class RequestType
     UPDATE_PROFILE,
     VIEW_PROFILE,
     SET_DAILY_MENU_AVAILABILITY_ZERO,
+    FETCH_FEEDBACK,
     UNKNOWN
 };
 
