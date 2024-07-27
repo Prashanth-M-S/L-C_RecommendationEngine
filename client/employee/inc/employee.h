@@ -26,6 +26,12 @@ public:
     void printNotifications(const std::vector<Notification>& notifications);
     void printProfile(const UserProfile &userProfile);
     std::pair<std::string, std::vector<DailyMenuEntry>> fetchDailyMenu();
+    std::vector<FeedbackQuestion> fetchFeedbackQuestions();
+    void printFeedbackQuestions(const std::vector<FeedbackQuestion> &feedbackQuestions);
+    void giveSuggestionForFood();
+    bool giveSuggestionForFood(int foodId);
+    bool sendFeedbackAnswersToServer(const std::vector<FeedbackAnswer> &feedbackAnswers);
+    int promptForDailyMenuId(const std::vector<DailyMenuEntry> &dailyMenu);
 
 private:
     ServerConnection &serverConnection;

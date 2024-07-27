@@ -23,7 +23,8 @@ void Employee::mainMenu()
         std::cout << "4. Check Notifications\n";
         std::cout << "5. Update Profile\n";
         std::cout << "6. View Profile\n";
-        std::cout << "7. Logout\n";
+        std::cout << "7. give suggestion to food\n";
+        std::cout << "8. Logout\n";
         std::cout << "-----------------------------\n";
 
         choice = userInputHandler->getIntInput("Enter your choice: ");
@@ -49,12 +50,15 @@ void Employee::mainMenu()
             viewProfile();
             break;
         case 7:
+            giveSuggestionForFood();
+            break;
+        case 8:
             std::cout << "Logging out..." << std::endl;
             break;
         default:
             std::cout << "Invalid choice. Please try again.\n";
         }
-    } while (choice != 7);
+    } while (choice != 8);
 }
 
 std::pair<std::string, std::vector<DailyMenuEntry>> Employee::fetchDailyMenu()
@@ -162,22 +166,7 @@ void Employee::giveFeedback()
     if (dailyMenu.empty())
         return;
 
-    int dailyMenuId;
-    while (true)
-    {
-        dailyMenuId = userInputHandler->getIntInput("Enter the ID of the menu item to give feedback for: ");
-        auto it = std::find_if(dailyMenu.begin(), dailyMenu.end(), [dailyMenuId](const DailyMenuEntry &entry)
-                               { return entry.dailyMenuId == dailyMenuId; });
-
-        if (it != dailyMenu.end())
-        {
-            break;
-        }
-        else
-        {
-            std::cout << "Invalid menu ID. Please enter a valid ID from the menu.\n";
-        }
-    }
+    int dailyMenuId = promptForDailyMenuId(dailyMenu);
 
     float rating = userInputHandler->getFoodRatingInput("Enter your rating (0 to 5): ");
     std::string comment = userInputHandler->getStringInput("Enter your comment: ");
@@ -311,4 +300,158 @@ void Employee::printNotifications(const std::vector<Notification> &notifications
         std::cout << notification.message << "\n";
     }
     std::cout << "------------------------------\n";
+}
+
+std::vector<FeedbackQuestion> Employee::fetchFeedbackQuestions()
+{
+    std::vector<FeedbackQuestion> feedbackQuestions;
+    std::string request = std::to_string(static_cast<int>(RequestType::FETCH_FEEDBACK_QUESTIONS));
+
+    if (!serverConnection.connectToServer())
+    {
+        std::cerr << "Failed to connect to server." << std::endl;
+        return feedbackQuestions;
+    }
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Failed to send request to server." << std::endl;
+        return feedbackQuestions;
+    }
+
+    std::string response = serverConnection.readResponse();
+    std::istringstream responseStream(response);
+    std::string status;
+    std::getline(responseStream, status, '|');
+
+    if (status != "STATUS_OK")
+    {
+        std::cerr << "Failed to fetch feedback questions: " << status << std::endl;
+        return feedbackQuestions;
+    }
+
+    std::string questionId, questionText;
+
+    while (std::getline(responseStream, questionId, '|') &&
+           std::getline(responseStream, questionText, '|'))
+    {
+        FeedbackQuestion question;
+        question.id = std::stoi(questionId);
+        question.text = questionText;
+        feedbackQuestions.push_back(question);
+    }
+
+    return feedbackQuestions;
+}
+
+void Employee::printFeedbackQuestions(const std::vector<FeedbackQuestion> &feedbackQuestions)
+{
+    std::cout << "\n---- Feedback Questions ----" << std::endl;
+    for (const auto &question : feedbackQuestions)
+    {
+        std::cout << "ID: " << question.id << ", Question: " << question.text << std::endl;
+    }
+    std::cout << "----------------------------\n";
+}
+
+bool Employee::giveSuggestionForFood(int foodId)
+{
+    std::vector<FeedbackQuestion> feedbackQuestions = fetchFeedbackQuestions();
+    std::vector<FeedbackAnswer> feedbackAnswers;
+
+    if (feedbackQuestions.empty())
+    {
+        std::cerr << "No feedback questions available." << std::endl;
+        return false;
+    }
+    std::cout << "\nPlease answers the below question :\n\n";
+    for (auto &feedbackQuestion : feedbackQuestions)
+    {
+        std::string answer = userInputHandler->getStringInput(feedbackQuestion.text + "\n ->  ");
+        FeedbackAnswer feedbackAnswer;
+        feedbackAnswer.questionId = feedbackQuestion.id;
+        feedbackAnswer.foodId = foodId;
+        feedbackAnswer.employeeId = this->id;
+        feedbackAnswer.answerText = answer;
+        feedbackAnswers.push_back(feedbackAnswer);
+    }
+
+    return sendFeedbackAnswersToServer(feedbackAnswers);
+}
+
+bool Employee::sendFeedbackAnswersToServer(const std::vector<FeedbackAnswer> &feedbackAnswers)
+{
+    std::string request = std::to_string(static_cast<int>(RequestType::ADD_SUGGESTION_FOR_FOOD));
+    std::string data;
+
+    for (const auto &feedbackAnswer : feedbackAnswers)
+    {
+        data += std::to_string(feedbackAnswer.questionId) + "," +
+                std::to_string(feedbackAnswer.foodId) + "," +
+                std::to_string(feedbackAnswer.employeeId) + "," +
+                feedbackAnswer.answerText + "|";
+    }
+
+    if (!serverConnection.connectToServer())
+    {
+        std::cerr << "Failed to connect to server." << std::endl;
+        return false;
+    }
+
+    if (!serverConnection.sendRequest(request + "," + data))
+    {
+        std::cerr << "Failed to send request to server." << std::endl;
+        return false;
+    }
+
+    std::string response = serverConnection.readResponse();
+    std::istringstream responseStream(response);
+    std::string status;
+    std::getline(responseStream, status, ',');
+
+    if (status != "STATUS_OK")
+    {
+        return false;
+    }
+
+    return true;
+}
+
+int Employee::promptForDailyMenuId(const std::vector<DailyMenuEntry> &dailyMenu)
+{
+    int dailyMenuId;
+    while (true)
+    {
+        dailyMenuId = userInputHandler->getIntInput("Enter the ID of the menu item to give feedback for: ");
+        auto it = std::find_if(dailyMenu.begin(), dailyMenu.end(), [dailyMenuId](const DailyMenuEntry &entry)
+                               { return entry.dailyMenuId == dailyMenuId; });
+
+        if (it != dailyMenu.end())
+        {
+            break;
+        }
+        else
+        {
+            std::cout << "Invalid menu ID. Please enter a valid ID from the menu.\n";
+        }
+    }
+    return dailyMenuId;
+}
+
+void Employee::giveSuggestionForFood()
+{
+    auto dailyMenu = viewMenu();
+    if (!dailyMenu.empty())
+    {
+        int dailyMenuId = promptForDailyMenuId(dailyMenu);
+
+        if (giveSuggestionForFood(dailyMenuId))
+        {
+            std::cout << "Suggestion submitted successfully.\n";
+        }
+        else
+        {
+            std::cout << "Failed to submit suggestion for food.\n";
+        }
+    }
 }

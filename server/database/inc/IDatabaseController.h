@@ -31,6 +31,9 @@ public:
     virtual UserProfile getUserProfile(int userId) = 0;
     virtual bool setDailyMenuAvailabilityToZero(int dailyMenuId) = 0;
     virtual bool addFeedbackQuestion(const std::string &questionText) = 0;
+    virtual std::vector<std::pair<int, std::string>> fetchFeedbackQuestions() = 0;
+    virtual bool storeFeedbackAnswers(const std::vector<FeedbackAnswer> &feedbackAnswers) = 0;
+    virtual std::vector<FeedbackAnswer> fetchSuggestionsForMenu(int menuId) = 0;
 };
 
 #endif

@@ -23,6 +23,9 @@ enum class RequestType
     SET_DAILY_MENU_AVAILABILITY_ZERO,
     FETCH_FEEDBACK,
     ADD_FEEDBACK_QUESTION,
+    FETCH_FEEDBACK_QUESTIONS,
+    ADD_SUGGESTION_FOR_FOOD,
+    FETCH_SUGGESTIONS_FOR_MENU,
     UNKNOWN
 };
 
@@ -84,6 +87,20 @@ struct UserProfile
     std::string spiceLevel;
     std::string cuisinePreference;
     std::string sweetTooth;
+};
+
+struct FeedbackQuestion
+{
+    int id;
+    std::string text;
+};
+
+struct FeedbackAnswer
+{
+    int questionId;
+    int foodId;
+    int employeeId;
+    std::string answerText;
 };
 
 #endif

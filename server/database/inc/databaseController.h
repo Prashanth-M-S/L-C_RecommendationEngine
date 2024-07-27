@@ -40,6 +40,9 @@ public:
     UserProfile getUserProfile(int userId);
     bool setDailyMenuAvailabilityToZero(int dailyMenuId);
     bool addFeedbackQuestion(const std::string &questionText);
+    std::vector<std::pair<int, std::string>> fetchFeedbackQuestions();
+    bool storeFeedbackAnswers(const std::vector<FeedbackAnswer> &feedbackAnswers);
+    std::vector<FeedbackAnswer> fetchSuggestionsForMenu(int menuId);
 
 private:
     void connect();

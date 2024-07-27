@@ -23,7 +23,8 @@ void Chef::mainMenu()
         std::cout << "5. get menu feedback\n";
         std::cout << "6. delete menu\n";
         std::cout << "7. write the suggestion questions\n";
-        std::cout << "8. Logout\n\n";
+        std::cout << "8. see Suggestions For Menu\n";
+        std::cout << "9. Logout\n\n";
         choice = userInputHandler->getIntInput("Enter your choice: ");
 
         switch (choice)
@@ -50,12 +51,15 @@ void Chef::mainMenu()
             writeSuggestionQuestion();
             break;
         case 8:
+            FoodSuggestionsForMenu();
+            break;
+        case 9:
             std::cout << "Logging out...\n";
             break;
         default:
             std::cout << "Invalid choice. Please try again.\n";
         }
-    } while (choice != 8);
+    } while (choice != 9);
 }
 
 std::vector<RecommendedMenuData> Chef::fetchRecommendedFood()
@@ -334,4 +338,40 @@ void Chef::writeSuggestionQuestion()
     std::string response = serverConnection.readResponse();
 
     std::cout << "server response: " << response << std::endl;
+}
+
+void Chef::FoodSuggestionsForMenu()
+{    
+    auto recommendedFood = fetchRecommendedFood();
+    if (recommendedFood.empty())
+        return;
+
+    int menuId;
+    while (true)
+    {
+        menuId = userInputHandler->getIntInput("Enter menu ID which you want to see the suggeston: ");
+        auto it = std::find_if(recommendedFood.begin(), recommendedFood.end(), [menuId](const RecommendedMenuData &menu)
+                               { return menu.menuId == menuId; });
+
+        if (it != recommendedFood.end())
+        {
+            break;
+        }
+        else
+        {
+            std::cerr << "Invalid menu ID. Please enter a valid menu ID from the recommended food list." << std::endl;
+        }
+    }
+
+    std::string request = std::to_string((int)RequestType::FETCH_SUGGESTIONS_FOR_MENU) + "," + std::to_string(menuId);
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Failed to send request to server." << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+
+    std::cout << std::endl << response << std::endl;
 }

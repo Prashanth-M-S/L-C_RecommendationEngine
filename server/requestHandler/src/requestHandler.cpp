@@ -113,6 +113,15 @@ std::string RequestHandler::processRequest(const GeneralRequest &request)
     case RequestType::ADD_FEEDBACK_QUESTION:
         response = handleAddFeedbackQuestion(request.requestData);
         break;
+    case RequestType::FETCH_FEEDBACK_QUESTIONS:
+        response = handleFetchFeedbackQuestions();
+        break;
+    case RequestType::ADD_SUGGESTION_FOR_FOOD:
+        response = handleUpdateFeedbackAnswer(request.requestData);
+        break;
+    case RequestType::FETCH_SUGGESTIONS_FOR_MENU:
+        response = handlefetchSuggestionForMenu(request.requestData);
+        break;
     default:
         response = std::to_string((int)RequestType::UNKNOWN);
         break;
@@ -482,4 +491,76 @@ std::string RequestHandler::handleAddFeedbackQuestion(const std::string &data)
     {
         return "STATUS_ERROR,Failed to add feedback question";
     }
+}
+
+std::string RequestHandler::handleFetchFeedbackQuestions()
+{
+    auto questions = database->fetchFeedbackQuestions();
+
+    std::string response = "STATUS_OK";
+    for (const auto &question : questions)
+    {
+        response += "|" + std::to_string(question.first) + "|" + question.second;
+    }
+
+    return response;
+}
+
+std::string RequestHandler::handleUpdateFeedbackAnswer(const std::string &data)
+{
+    auto feedbackAnswerParams = dataParser->deserializeFeedbackAnswers(data);
+
+    if (feedbackAnswerParams.first)
+    {
+        if (database->storeFeedbackAnswers(feedbackAnswerParams.second))
+        {
+            return "STATUS_OK,Feedback answers updated successfully";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to update feedback answers";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handlefetchSuggestionForMenu(const std::string &data)
+{
+    int menuId = std::stoi(data);
+
+    auto questions = database->fetchFeedbackQuestions();
+    std::vector<FeedbackAnswer> answers = database->fetchSuggestionsForMenu(menuId);
+
+    std::string response;
+    response += "Questions and Answers:\n";
+
+    for (const auto &question : questions)
+    {
+        response += "ID: " + std::to_string(question.first) + ", Question: " + question.second + "\n";
+
+        bool hasAnswers = false;
+        for (const auto &answer : answers)
+        {
+            if (answer.questionId == question.first)
+            {
+                response += "  Answer: " + answer.answerText + "\n";
+                hasAnswers = true;
+            }
+        }
+
+        if (!hasAnswers)
+        {
+            response += "  No answers yet.\n";
+        }
+    }
+
+    if (questions.empty())
+    {
+        response += "No questions found.\n";
+    }
+
+    return response;
 }

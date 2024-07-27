@@ -25,6 +25,7 @@ public:
     void fetchMenuFeedbacks();
     void deleteMenuItem();
     void writeSuggestionQuestion();
+    void FoodSuggestionsForMenu();
 
 private:
     ServerConnection &serverConnection;

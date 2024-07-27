@@ -38,6 +38,9 @@ private:
     std::string handleSetDailyMenuAvailabilityToZeroRequest(const std::string &data);
     std::string handleFetchFeedback(const std::string &data);
     std::string handleAddFeedbackQuestion(const std::string &data);
+    std::string handleFetchFeedbackQuestions();
+    std::string handleUpdateFeedbackAnswer(const std::string &data);
+    std::string handlefetchSuggestionForMenu(const std::string &data);
 };
 
 #endif

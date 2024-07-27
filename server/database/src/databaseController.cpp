@@ -611,3 +611,99 @@ bool DatabaseController::addFeedbackQuestion(const std::string &questionText)
 
     return false;
 }
+
+std::vector<std::pair<int, std::string>> DatabaseController::fetchFeedbackQuestions()
+{
+    std::vector<std::pair<int, std::string>> questions;
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement("SELECT question_id, question_text FROM FeedbackQuestion"));
+
+        std::unique_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
+
+        while (resultSet->next())
+        {
+            int questionId = resultSet->getInt("question_id");
+            std::string questionText = resultSet->getString("question_text");
+            questions.emplace_back(questionId, questionText);
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "DatabaseController::fetchFeedbackQuestions() SQLException: " << e.what() << "\n";
+    }
+
+    return questions;
+}
+
+bool DatabaseController::storeFeedbackAnswers(const std::vector<FeedbackAnswer> &feedbackAnswers)
+{
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> getMenuIdStatement(
+            connection->prepareStatement("SELECT menuId FROM dailyMenu WHERE dailyMenuId = ?"));
+
+        std::unique_ptr<sql::PreparedStatement> insertFeedbackStatement(
+            connection->prepareStatement("INSERT INTO FeedbackAnswer (question_id, menuId, userId, answer_text) VALUES (?, ?, ?, ?)"));
+
+        for (const auto &answer : feedbackAnswers)
+        {
+            getMenuIdStatement->setInt(1, answer.foodId);
+            std::unique_ptr<sql::ResultSet> resultSet(getMenuIdStatement->executeQuery());
+
+            if (resultSet->next())
+            {
+                int menuId = resultSet->getInt("menuId");
+
+                insertFeedbackStatement->setInt(1, answer.questionId);
+                insertFeedbackStatement->setInt(2, menuId);
+                insertFeedbackStatement->setInt(3, answer.employeeId);
+                insertFeedbackStatement->setString(4, answer.answerText);
+                insertFeedbackStatement->executeUpdate();
+            }
+            else
+            {
+                std::cerr << "DatabaseController::storeFeedbackAnswers() Error: Invalid dailyMenuId " << answer.foodId << "\n";
+                return false;
+            }
+        }
+
+        return true;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "DatabaseController::storeFeedbackAnswers() SQLException: " << e.what() << "\n";
+    }
+
+    return false;
+}
+
+std::vector<FeedbackAnswer> DatabaseController::fetchSuggestionsForMenu(int menuId)
+{
+    std::vector<FeedbackAnswer> feedbackAnswers;
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement("SELECT question_id, answer_text, userId FROM FeedbackAnswer WHERE menuId = ?"));
+        preparedStatement->setInt(1, menuId);
+
+        std::unique_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
+
+        while (resultSet->next())
+        {
+            FeedbackAnswer answer;
+            answer.questionId = resultSet->getInt("question_id");
+            answer.answerText = resultSet->getString("answer_text");
+            answer.employeeId = resultSet->getInt("userId");
+
+            feedbackAnswers.push_back(answer);
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "DatabaseController::fetchFeedbackAnswersForMenu() SQLException: " << e.what() << "\n";
+    }
+
+    return feedbackAnswers;
+}

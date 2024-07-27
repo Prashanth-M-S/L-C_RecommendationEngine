@@ -29,6 +29,7 @@ public:
     std::pair<bool, Feedback> deserializeUserFeedbackRequest(const std::string &data);
     std::string serializeData(const std::vector<Notification> &notifications);
     std::pair<int, std::vector<int>> deserializeMarkNotificationsViewedRequest(const std::string &data);
+    std::pair<bool, std::vector<FeedbackAnswer>> deserializeFeedbackAnswers(const std::string &data);
 };
 
 #endif

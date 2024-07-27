@@ -193,3 +193,46 @@ std::pair<int, std::vector<int>> DataParser::deserializeMarkNotificationsViewedR
 
     return {userId, notificationIds};
 }
+
+std::pair<bool, std::vector<FeedbackAnswer>> DataParser::deserializeFeedbackAnswers(const std::string &data)
+{
+    std::vector<FeedbackAnswer> feedbackAnswers;
+    std::istringstream dataStream(data);
+    std::string token;
+
+    try
+    {
+        while (std::getline(dataStream, token, '|'))
+        {
+            std::istringstream tokenStream(token);
+            std::string item;
+            std::vector<std::string> items;
+
+            while (std::getline(tokenStream, item, ','))
+            {
+                items.push_back(item);
+            }
+
+            if (items.size() == 4)
+            {
+                FeedbackAnswer feedbackAnswer;
+                feedbackAnswer.questionId = std::stoi(items[0]);
+                feedbackAnswer.foodId = std::stoi(items[1]);
+                feedbackAnswer.employeeId = std::stoi(items[2]);
+                feedbackAnswer.answerText = items[3];
+                feedbackAnswers.push_back(feedbackAnswer);
+            }
+            else
+            {
+                return {false, {}};
+            }
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "DataParser::deserializeFeedbackAnswers() Exception: " << e.what() << "\n";
+        return {false, {}};
+    }
+
+    return {true, feedbackAnswers};
+}
