@@ -37,6 +37,7 @@ private:
     std::string handleViewProfile(const std::string &data);
     std::string handleSetDailyMenuAvailabilityToZeroRequest(const std::string &data);
     std::string handleFetchFeedback(const std::string &data);
+    std::string handleAddFeedbackQuestion(const std::string &data);
 };
 
 #endif

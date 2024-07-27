@@ -591,3 +591,23 @@ bool DatabaseController::setDailyMenuAvailabilityToZero(int dailyMenuId)
 
     return false;
 }
+
+bool DatabaseController::addFeedbackQuestion(const std::string &questionText)
+{
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> preparedStatement(
+            connection->prepareStatement("INSERT INTO FeedbackQuestion (question_text) VALUES (?)"));
+
+        preparedStatement->setString(1, questionText);
+        preparedStatement->executeUpdate();
+
+        return true;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "DatabaseController::addFeedbackQuestion() SQLException: " << e.what() << "\n";
+    }
+
+    return false;
+}

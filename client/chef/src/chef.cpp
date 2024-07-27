@@ -22,7 +22,8 @@ void Chef::mainMenu()
         std::cout << "4. set menu availability to Zero\n";
         std::cout << "5. get menu feedback\n";
         std::cout << "6. delete menu\n";
-        std::cout << "7. Logout\n\n";
+        std::cout << "7. write the suggestion questions\n";
+        std::cout << "8. Logout\n\n";
         choice = userInputHandler->getIntInput("Enter your choice: ");
 
         switch (choice)
@@ -46,12 +47,15 @@ void Chef::mainMenu()
             deleteMenuItem();
             break;
         case 7:
+            writeSuggestionQuestion();
+            break;
+        case 8:
             std::cout << "Logging out...\n";
             break;
         default:
             std::cout << "Invalid choice. Please try again.\n";
         }
-    } while (choice != 7);
+    } while (choice != 8);
 }
 
 std::vector<RecommendedMenuData> Chef::fetchRecommendedFood()
@@ -305,6 +309,22 @@ void Chef::deleteMenuItem()
     }
 
     std::string request = std::to_string((int)RequestType::DELETE_MENU) + "," + std::to_string(menuId);
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Send request failed" << std::endl;
+        return;
+    }
+    std::string response = serverConnection.readResponse();
+
+    std::cout << "server response: " << response << std::endl;
+}
+
+void Chef::writeSuggestionQuestion()
+{
+    std::string question = userInputHandler->getStringInput("Enter the question you would like to ask the customer: ");
+
+    std::string request = std::to_string((int)RequestType::ADD_FEEDBACK_QUESTION) + "," + question;
 
     if (!serverConnection.sendRequest(request))
     {

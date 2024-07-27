@@ -110,6 +110,9 @@ std::string RequestHandler::processRequest(const GeneralRequest &request)
     case RequestType::FETCH_FEEDBACK:
         response = handleFetchFeedback(request.requestData);
         break;
+    case RequestType::ADD_FEEDBACK_QUESTION:
+        response = handleAddFeedbackQuestion(request.requestData);
+        break;
     default:
         response = std::to_string((int)RequestType::UNKNOWN);
         break;
@@ -467,4 +470,16 @@ std::string RequestHandler::handleFetchFeedback(const std::string &data)
     }
 
     return response;
+}
+
+std::string RequestHandler::handleAddFeedbackQuestion(const std::string &data)
+{
+    if (database->addFeedbackQuestion(data))
+    {
+        return "STATUS_OK,Feedback question added successfully";
+    }
+    else
+    {
+        return "STATUS_ERROR,Failed to add feedback question";
+    }
 }

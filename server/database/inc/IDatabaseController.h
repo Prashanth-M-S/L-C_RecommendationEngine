@@ -30,6 +30,7 @@ public:
     virtual bool updateUserProfile(const UserProfile &profile) = 0;
     virtual UserProfile getUserProfile(int userId) = 0;
     virtual bool setDailyMenuAvailabilityToZero(int dailyMenuId) = 0;
+    virtual bool addFeedbackQuestion(const std::string &questionText) = 0;
 };
 
 #endif

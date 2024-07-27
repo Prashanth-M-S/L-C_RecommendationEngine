@@ -39,6 +39,7 @@ public:
     bool updateUserProfile(const UserProfile &profile);
     UserProfile getUserProfile(int userId);
     bool setDailyMenuAvailabilityToZero(int dailyMenuId);
+    bool addFeedbackQuestion(const std::string &questionText);
 
 private:
     void connect();
