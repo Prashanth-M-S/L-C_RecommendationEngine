@@ -26,6 +26,8 @@ public:
     void deleteMenuItem();
     void writeSuggestionQuestion();
     void FoodSuggestionsForMenu();
+    std::pair<std::string, std::vector<Menu>> fetchDiscardedMenu();
+    void viewDiscardMenu();
 
 private:
     ServerConnection &serverConnection;

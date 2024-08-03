@@ -13,6 +13,7 @@ public:
     std::pair<std::string, std::vector<DailyMenuEntry>> deserializeToDailyMenuEntries(const std::string &data);
     std::pair<std::string, std::vector<Notification>> deserializeNotifications(const std::string &data);
     std::pair<std::string, UserProfile> deserializeUserProfile(const std::string &data);
+    std::pair<std::string, std::vector<Menu>> deserializeMenu(const std::string &data);
 };
 
 #endif

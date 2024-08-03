@@ -113,14 +113,14 @@ std::pair<std::string, std::vector<Notification>> DataParser::deserializeNotific
     result.first = status;
 
     std::string item;
-    try 
+    try
     {
         while (std::getline(ss, item, ';'))
         {
             Notification notification;
             std::istringstream itemStream(item);
             std::string field;
-            
+
             std::getline(itemStream, field, ',');
             notification.notificationId = std::stoi(field);
             std::getline(itemStream, field, ',');
@@ -131,7 +131,7 @@ std::pair<std::string, std::vector<Notification>> DataParser::deserializeNotific
             result.second.push_back(notification);
         }
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
         result.second.clear();
     }
@@ -163,4 +163,36 @@ std::pair<std::string, UserProfile> DataParser::deserializeUserProfile(const std
     }
 
     return {status, userProfile};
+}
+
+std::pair<std::string, std::vector<Menu>> DataParser::deserializeMenu(const std::string &data)
+{
+    std::istringstream ss(data);
+    std::string status;
+    std::getline(ss, status, ',');
+
+    std::vector<Menu> menus;
+    if (status == "STATUS_OK")
+    {
+        while (ss)
+        {
+            Menu menu;
+            std::string menuIdStr, priceStr;
+
+            if (!std::getline(ss, menuIdStr, ','))
+                break;
+            menu.menuId = std::stoi(menuIdStr);
+
+            if (!std::getline(ss, menu.menuName, ','))
+                break;
+
+            if (!std::getline(ss, priceStr, ','))
+                break;
+            menu.price = std::stof(priceStr);
+
+            menus.push_back(menu);
+        }
+    }
+
+    return std::make_pair(status, menus);
 }

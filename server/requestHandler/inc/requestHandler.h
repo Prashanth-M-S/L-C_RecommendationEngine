@@ -41,6 +41,7 @@ private:
     std::string handleFetchFeedbackQuestions();
     std::string handleUpdateFeedbackAnswer(const std::string &data);
     std::string handlefetchSuggestionForMenu(const std::string &data);
+    std::string handleGetDiscardedMenu();
 };
 
 #endif

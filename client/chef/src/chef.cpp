@@ -23,8 +23,9 @@ void Chef::mainMenu()
         std::cout << "5. get menu feedback\n";
         std::cout << "6. delete menu\n";
         std::cout << "7. write the suggestion questions\n";
-        std::cout << "8. see Suggestions For Menu\n";
-        std::cout << "9. Logout\n\n";
+        std::cout << "8. show Suggestions For Menu\n";
+        std::cout << "9. show discarded Menu\n";
+        std::cout << "10. Logout\n\n";
         choice = userInputHandler->getIntInput("Enter your choice: ");
 
         switch (choice)
@@ -54,12 +55,15 @@ void Chef::mainMenu()
             FoodSuggestionsForMenu();
             break;
         case 9:
+            viewDiscardMenu();
+            break;
+        case 10:
             std::cout << "Logging out...\n";
             break;
         default:
             std::cout << "Invalid choice. Please try again.\n";
         }
-    } while (choice != 9);
+    } while (choice != 10);
 }
 
 std::vector<RecommendedMenuData> Chef::fetchRecommendedFood()
@@ -341,7 +345,7 @@ void Chef::writeSuggestionQuestion()
 }
 
 void Chef::FoodSuggestionsForMenu()
-{    
+{
     auto recommendedFood = fetchRecommendedFood();
     if (recommendedFood.empty())
         return;
@@ -373,5 +377,52 @@ void Chef::FoodSuggestionsForMenu()
 
     std::string response = serverConnection.readResponse();
 
-    std::cout << std::endl << response << std::endl;
+    std::cout << std::endl
+              << response << std::endl;
+}
+
+std::pair<std::string, std::vector<Menu>> Chef::fetchDiscardedMenu()
+{
+    std::string request = std::to_string((int)RequestType::GET_DISCARDED_MENU);
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Send request failed" << std::endl;
+        return {};
+    }
+
+    std::string response = serverConnection.readResponse();
+    return dataParser->deserializeMenu(response);
+}
+void Chef::viewDiscardMenu()
+{
+    std::pair<std::string, std::vector<Menu>> data = fetchDiscardedMenu();
+
+    if (data.first == "STATUS_OK")
+    {
+        if (data.second.empty())
+        {
+            std::cout << "No discarded menus found.\n";
+        }
+        else
+        {
+            std::cout << "---------------------------------------\n";
+            std::cout << "| ID   | Name                | Price  |\n";
+            std::cout << "---------------------------------------\n";
+
+            for (const auto &menu : data.second)
+            {
+                std::cout << "| "
+                          << std::setw(4) << menu.menuId << " | "
+                          << std::setw(19) << menu.menuName << " | "
+                          << std::setw(6) << std::fixed << std::setprecision(2) << menu.price << " |\n";
+            }
+
+            std::cout << "----------------------------------------\n";
+        }
+    }
+    else
+    {
+        std::cout << "Failed to fetch discarded menus. Status: " << data.first << std::endl;
+    }
 }

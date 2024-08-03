@@ -38,7 +38,8 @@ std::string cleanString(const std::string &input)
 {
     std::string cleaned;
     std::remove_copy_if(input.begin(), input.end(), std::back_inserter(cleaned),
-                        [](char c) { return std::ispunct(c) && c != '\''; });
+                        [](char c)
+                        { return std::ispunct(c) && c != '\''; });
 
     std::transform(cleaned.begin(), cleaned.end(), cleaned.begin(), ::tolower);
 
@@ -106,12 +107,12 @@ std::vector<DailyMenuAttributes> RecommendationEngine::sortMenusByUserProfile(co
 
         if (profile.preferenceType != "NO PREFERENCE" && profile.preferenceType == menu.dietType)
         {
-            preferenceScore += 3;
+            preferenceScore += 10;
         }
 
         if (profile.spiceLevel != "NO PREFERENCE" && profile.spiceLevel == menu.spiceLevel)
         {
-            preferenceScore += 2;
+            preferenceScore += 3;
         }
 
         if (profile.cuisinePreference != "NO PREFERENCE" && profile.cuisinePreference == menu.cuisineType)
@@ -141,4 +142,33 @@ std::vector<DailyMenuAttributes> RecommendationEngine::sortMenusByUserProfile(co
     }
 
     return sortedMenus;
+}
+
+std::vector<Menu> RecommendationEngine::getDiscardedFood()
+{
+    std::vector<Menu> discardedMenus;
+    std::vector<Menu> menus = database->fetchMenusWithFeedback();
+
+    for (auto &menu : menus)
+    {
+        float totalRating = 0;
+        float totalSentimentScore = 0;
+        int feedbackCount = menu.feedbacks.size();
+
+        for (const auto &feedback : menu.feedbacks)
+        {
+            totalRating += feedback.rating;
+            totalSentimentScore += calculateSentimentScore(feedback.comment);
+        }
+
+        float averageRating = feedbackCount ? totalRating / feedbackCount : 0;
+        float averageSentimentScore = feedbackCount ? totalSentimentScore / feedbackCount : 0;
+
+        if (averageRating < 3.0 && feedbackCount > 5 && averageSentimentScore < 2.5)
+        {
+            discardedMenus.push_back(menu);
+        }
+    }
+
+    return discardedMenus;
 }

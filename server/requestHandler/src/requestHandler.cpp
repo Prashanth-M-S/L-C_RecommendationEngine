@@ -122,6 +122,9 @@ std::string RequestHandler::processRequest(const GeneralRequest &request)
     case RequestType::FETCH_SUGGESTIONS_FOR_MENU:
         response = handlefetchSuggestionForMenu(request.requestData);
         break;
+    case RequestType::GET_DISCARDED_MENU:
+        response = handleGetDiscardedMenu();
+        break;
     default:
         response = std::to_string((int)RequestType::UNKNOWN);
         break;
@@ -560,6 +563,19 @@ std::string RequestHandler::handlefetchSuggestionForMenu(const std::string &data
     if (questions.empty())
     {
         response += "No questions found.\n";
+    }
+
+    return response;
+}
+
+std::string RequestHandler::handleGetDiscardedMenu()
+{
+    std::vector<Menu> discardedMenus = recommendationEngine->getDiscardedFood();
+
+    std::string response = "STATUS_OK";
+    for (const auto &menu : discardedMenus)
+    {
+        response += "," + std::to_string(menu.menuId) + "," + menu.menuName + "," + std::to_string(menu.price);
     }
 
     return response;
