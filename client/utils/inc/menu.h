@@ -4,6 +4,19 @@
 #include <string>
 #include <vector>
 
+const std::vector<std::string> dietOptions = {"Vegetarian", "Non Vegetarian", "Eggetarian"};
+const std::vector<std::string> spiceOptions = {"High", "Medium", "Low"};
+const std::vector<std::string> cuisineOptions = {"North Indian", "South Indian", "Other"};
+const std::vector<std::string> sweetOptions = {"Yes", "No"};
+
+struct ProfileOptions
+{
+    std::string dietType;
+    std::string spiceLevel;
+    std::string cuisineType;
+    std::string sweetType;
+};
+
 enum class RequestType
 {
     LOGIN,
@@ -102,6 +115,14 @@ struct FeedbackAnswer
     int foodId;
     int employeeId;
     std::string answerText;
+};
+
+struct UserData
+{
+    int userId;
+    std::string name;
+    std::string password;
+    std::string role;
 };
 
 #endif

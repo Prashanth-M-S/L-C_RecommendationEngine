@@ -1,8 +1,6 @@
-#include "admin.h"
+#include "Admin.h"
 #include <iostream>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
 #include <cstring>
 #include <iomanip>
 
@@ -10,7 +8,7 @@ Admin::Admin(int id, const std::string &password, ServerConnection &serverConnec
     : id(id), password(password), role("admin"), serverConnection(serverConnection)
 {
     userInputHandler = std::make_shared<UserInputHandler>();
-    dataParser = std::make_shared<DataParser>();
+    adminService = std::make_shared<AdminService>(id, serverConnection);
 }
 
 void Admin::mainMenu()
@@ -59,20 +57,13 @@ void Admin::mainMenu()
 
 void Admin::addUser()
 {
-    int userId = userInputHandler->getIntInput("Enter user ID: ");
-    std::string username = userInputHandler->getStringInput("Enter username: ");
-    std::string password = userInputHandler->getStringInput("Enter password: ");
-    std::string role = userInputHandler->getStringInput("Select role: ");
+    UserData userData;
+    userData.userId = userInputHandler->getIntInput("Enter user ID: ");
+    userData.name = userInputHandler->getStringInput("Enter username: ");
+    userData.password = userInputHandler->getStringInput("Enter password: ");
+    userData.role = userInputHandler->getStringInput("Select role: ");
 
-    std::string request = std::to_string((int)RequestType::ADD_USER) + "," + std::to_string(userId) + "," + username + "," + password + "," + role;
-
-    if (!serverConnection.sendRequest(request))
-    {
-        std::cerr << "Send request failed" << std::endl;
-        return;
-    }
-
-    std::string response = serverConnection.readResponse();
+    std::string response = adminService->addUser(userData);
     std::cout << "Server response: " << response << std::endl;
 }
 
@@ -80,17 +71,9 @@ void Admin::deleteUser()
 {
     int userIdToDelet = userInputHandler->getIntInput("Enter user ID that you want to delete: ");
 
-    std::string request = std::to_string((int)RequestType::DELETE_USER) + "," + std::to_string(id) + "," + std::to_string(userIdToDelet);
+    std::string response = adminService->deleteUser(userIdToDelet);
 
-    if (!serverConnection.sendRequest(request))
-    {
-        std::cerr << "Send request failed" << std::endl;
-        return;
-    }
-
-    std::string response = serverConnection.readResponse();
-
-    std::cout << "Server response: " << response << std::endl;
+    std::cout << response << std::endl;
 }
 
 void Admin::addMenu()
@@ -130,29 +113,14 @@ void Admin::deleteMenu()
 {
     viewRecommendedmenu();
     int menuid = userInputHandler->getIntInput("Enter menu ID to delete: ");
-    std::string request = std::to_string((int)RequestType::DELETE_MENU) + "," + std::to_string(menuid);
+    std::string response = adminService->deleteMenu(menuid);
 
-    if (!serverConnection.sendRequest(request))
-    {
-        std::cerr << "Send request failed" << std::endl;
-        return;
-    }
-    std::string response = serverConnection.readResponse();
-
-    std::cout << "server response: " << response << std::endl;
+    std::cout << response << std::endl;
 }
 
 void Admin::viewRecommendedmenu()
 {
-    std::string request = std::to_string((int)RequestType::GET_RECOMMENDED_FOOD);
-    if (!serverConnection.sendRequest(request))
-    {
-        std::cerr << "Failed to send request to server." << std::endl;
-        return;
-    }
-
-    std::string response = serverConnection.readResponse();
-    auto [status, recommendedFood] = dataParser->parseRecommendedFood(response);
+    auto [status, recommendedFood] = adminService->getRecommendedmenu();
 
     if (status == "STATUS_OK")
     {
@@ -176,23 +144,9 @@ void Admin::viewRecommendedmenu()
     }
 }
 
-std::pair<std::string, std::vector<DailyMenuEntry>> Admin::fetchDailyMenu()
+void Admin::viewMenu()
 {
-    std::string request = std::to_string((int)RequestType::GET_DAILY_MENU) + "," + std::to_string(id);
-    if (!serverConnection.sendRequest(request))
-    {
-        return {"Failed to send request to server.", {}};
-    }
-
-    std::string response = serverConnection.readResponse();
-    auto [status, dailyMenu] = dataParser->deserializeToDailyMenuEntries(response);
-
-    return {status, dailyMenu};
-}
-
-std::vector<DailyMenuEntry> Admin::viewMenu()
-{
-    auto [status, dailyMenu] = fetchDailyMenu();
+    auto [status, dailyMenu] = adminService->fetchDailyMenu();
 
     if (status == "STATUS_OK")
     {
@@ -202,8 +156,6 @@ std::vector<DailyMenuEntry> Admin::viewMenu()
     {
         std::cout << "Failed to get the daily menu items: " << status << "\n";
     }
-
-    return dailyMenu;
 }
 
 void Admin::printDailyMenu(const std::vector<DailyMenuEntry> &dailyMenu)
