@@ -1,0 +1,582 @@
+#include "requestHandler.h"
+#include <iostream>
+#include <cstring>
+#include <unistd.h>
+#include <sys/socket.h>
+
+#define BUFFER_SIZE (1024)
+
+RequestHandler::RequestHandler(std::shared_ptr<IDatabaseController> database, std::shared_ptr<IRecommendationEngine> recommendationEngine)
+    : database(database), recommendationEngine(recommendationEngine), dataParser(std::make_shared<DataParser>()) {}
+
+void RequestHandler::handleRequest(int new_socket)
+{
+    while (true)
+    {
+        std::string request = readFromSocket(new_socket);
+        if (request.empty())
+        {
+            return;
+        }
+
+        std::pair<bool, GeneralRequest> requestAndData = dataParser->deserializeRequest(request);
+
+        if (requestAndData.first)
+        {
+            std::string response = processRequest(requestAndData.second);
+            int bytesSent = write(new_socket, response.c_str(), response.length());
+            if (bytesSent < 0)
+            {
+                perror("handleRequest: Error writing to socket");
+            }
+        }
+        else
+        {
+            std::string response = "parse error";
+            int bytesSent = write(new_socket, response.c_str(), response.length());
+            if (bytesSent < 0)
+            {
+                perror("Error writing to socket");
+            }
+        }
+    }
+}
+
+std::string RequestHandler::readFromSocket(int new_socket)
+{
+    char buffer[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
+
+    int bytesReceived = read(new_socket, buffer, BUFFER_SIZE - 1);
+    if (bytesReceived < 0)
+    {
+        return "";
+    }
+
+    return std::string(buffer);
+}
+
+std::string RequestHandler::processRequest(const GeneralRequest &request)
+{
+    std::string response;
+
+    switch (request.requestType)
+    {
+    case RequestType::LOGIN:
+        response = handleLoginRequest(request.requestData);
+        break;
+    case RequestType::GET_RECOMMENDED_FOOD:
+        response = handleGetRecommendedFoodRequest();
+        break;
+    case RequestType::ADD_USER:
+        response = handleAddUserRequest(request.requestData);
+        break;
+    case RequestType::DELETE_USER:
+        response = handleDelUserRequest(request.requestData);
+        break;
+    case RequestType::ADD_MENU:
+        response = handleAddMenuRequest(request.requestData);
+        break;
+    case RequestType::DELETE_MENU:
+        response = handleDelMenuRequest(request.requestData);
+        break;
+    case RequestType::ROLLOUT_MENU:
+        response = handleAddDailyMenuItemRequest(request.requestData);
+        break;
+    case RequestType::GET_DAILY_MENU:
+        response = handleGetDailyMenuRequest(request.requestData);
+        break;
+    case RequestType::PLACE_ORDER:
+        response = handlePlaceOrderRequest(request.requestData);
+        break;
+    case RequestType::ADD_FEEDBACK:
+        response = handleAddUserFeedbackRequest(request.requestData);
+        break;
+    case RequestType::GET_NOTIFICATIONS:
+        response = handleGetNotifications(request.requestData);
+        break;
+    case RequestType::MARK_NOTIFICATIONS_VIEWED:
+        response = handleMarkNotificationsViewed(request.requestData);
+        break;
+    case RequestType::UPDATE_PROFILE:
+        response = handleUpdateProfile(request.requestData);
+        break;
+    case RequestType::VIEW_PROFILE:
+        response = handleViewProfile(request.requestData);
+        break;
+    case RequestType::SET_DAILY_MENU_AVAILABILITY_ZERO:
+        response = handleSetDailyMenuAvailabilityToZeroRequest(request.requestData);
+        break;
+    case RequestType::FETCH_FEEDBACK:
+        response = handleFetchFeedback(request.requestData);
+        break;
+    case RequestType::ADD_FEEDBACK_QUESTION:
+        response = handleAddFeedbackQuestion(request.requestData);
+        break;
+    case RequestType::FETCH_FEEDBACK_QUESTIONS:
+        response = handleFetchFeedbackQuestions();
+        break;
+    case RequestType::ADD_SUGGESTION_FOR_FOOD:
+        response = handleUpdateFeedbackAnswer(request.requestData);
+        break;
+    case RequestType::FETCH_SUGGESTIONS_FOR_MENU:
+        response = handlefetchSuggestionForMenu(request.requestData);
+        break;
+    case RequestType::GET_DISCARDED_MENU:
+        response = handleGetDiscardedMenu();
+        break;
+    default:
+        response = std::to_string((int)RequestType::UNKNOWN);
+        break;
+    }
+
+    return response;
+}
+
+std::string RequestHandler::handleLoginRequest(const std::string &data)
+{
+    std::pair<bool, LoginRequest> loginParam = dataParser->deserializeLoginRequest(data);
+
+    if (loginParam.first)
+    {
+        return database->authenticateUser(loginParam.second.userId, loginParam.second.password);
+    }
+    else
+    {
+        return "INVALID_PARAMETER";
+    }
+}
+
+std::string RequestHandler::handleGetRecommendedFoodRequest()
+{
+    std::vector<RecommendedMenuData> recommendedFood = recommendationEngine->getRecommendedFood();
+
+    if (recommendedFood.empty())
+    {
+        return "STATUS_NO_RECOMMENDATIONS";
+    }
+
+    std::pair<bool, std::string> parseData = dataParser->deserializeRecommendedMenuData(recommendedFood);
+
+    if (parseData.first)
+    {
+        return "STATUS_OK," + parseData.second;
+    }
+    else
+    {
+        return "STATUS_ERROR";
+    }
+}
+
+std::string RequestHandler::handleAddUserRequest(const std::string &data)
+{
+    std::pair<bool, User> addUserParam = dataParser->deserializeAddUserRequest(data);
+
+    if (addUserParam.first)
+    {
+        if (database->addUser(addUserParam.second))
+        {
+            return "STATUS_OK,User added successfully";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to add user";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handleDelUserRequest(const std::string &data)
+{
+    std::pair<bool, std::vector<std::string>> parsedData = dataParser->deserializeData(data);
+
+    if (parsedData.first && parsedData.second.size() == 2)
+    {
+        try
+        {
+            int currentAdminId = std::stoi(parsedData.second[0]);
+            int userIdToDelete = std::stoi(parsedData.second[1]);
+
+            if (currentAdminId == userIdToDelete)
+            {
+                return "STATUS_ERROR,You cannot delete your own account";
+            }
+
+            if (database->deleteUser(userIdToDelete))
+            {
+                return "STATUS_OK,User deleted successfully";
+            }
+            else
+            {
+                return "STATUS_ERROR,Failed to delete user";
+            }
+        }
+        catch (const std::invalid_argument &e)
+        {
+            return "STATUS_ERROR,Invalid user ID format";
+        }
+        catch (const std::out_of_range &e)
+        {
+            return "STATUS_ERROR,User ID out of range";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handleAddMenuRequest(const std::string &data)
+{
+    std::pair<bool, std::vector<std::string>> addMenuParam = dataParser->deserializeData(data);
+    MenuAttributes menuData;
+
+    menuData.menuName = addMenuParam.second.at(0);
+    menuData.price = std::stod(addMenuParam.second.at(1));
+    menuData.dietType = addMenuParam.second.at(2);
+    menuData.spiceLevel = addMenuParam.second.at(3);
+    menuData.cuisineType = addMenuParam.second.at(4);
+    menuData.sweetType = addMenuParam.second.at(5);
+
+    if (addMenuParam.first)
+    {
+        if (database->addMenu(menuData))
+        {
+            return "STATUS_OK,Menu added successfully";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to add menu";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handleDelMenuRequest(const std::string &data)
+{
+    int menuId = std::stoi(data);
+    if (database->deleteMenu(menuId))
+    {
+        return "STATUS_OK,Menu deleted successfully";
+    }
+
+    return "STATUS_ERROR,Failed to delete menu";
+};
+
+std::string RequestHandler::handleAddDailyMenuItemRequest(const std::string &data)
+{
+    std::pair<bool, std::vector<std::string>> addDailyMenuItemParam = dataParser->deserializeData(data);
+    DailyMenuEntry dailyMenuEntry;
+
+    dailyMenuEntry.menuId = std::stoi(addDailyMenuItemParam.second.at(0));
+    dailyMenuEntry.availability = std::stoi(addDailyMenuItemParam.second.at(1));
+    dailyMenuEntry.mealCategory = addDailyMenuItemParam.second.at(2);
+
+    if (addDailyMenuItemParam.first)
+    {
+        if (database->insertDailyMenuEntries({dailyMenuEntry}))
+        {
+            handleNotification("Menu is rolled out");
+            return "STATUS_OK,Daily menu item added successfully";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to add daily menu item";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handleGetDailyMenuRequest(const std::string &data)
+{
+    int userId = std::stoi(data);
+    std::vector<DailyMenuAttributes> items = recommendationEngine->getRecommendedFoodForUser(userId);
+
+    if (items.empty())
+    {
+        return "STATUS_OK,";
+    }
+
+    return "STATUS_OK," + dataParser->serializeData(items);
+}
+
+std::string RequestHandler::handlePlaceOrderRequest(const std::string &data)
+{
+    std::pair<bool, std::vector<std::string>> placeOrderParam = dataParser->deserializeData(data);
+    UserOrderEntry userOrderEntry;
+
+    userOrderEntry.userId = std::stoi(placeOrderParam.second.at(0));
+    userOrderEntry.dailyMenuId = std::stoi(placeOrderParam.second.at(1));
+
+    if (placeOrderParam.first)
+    {
+        if (database->insertUserOrderEntries({userOrderEntry}))
+        {
+            return "STATUS_OK,User order placed successfully";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to place user order";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handleAddUserFeedbackRequest(const std::string &data)
+{
+    std::pair<bool, Feedback> addFeedbackParam = dataParser->deserializeUserFeedbackRequest(data);
+
+    if (addFeedbackParam.first)
+    {
+        if (database->insertUserFeedback(addFeedbackParam.second))
+        {
+            return "STATUS_OK,User feedback added successfully";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to add user feedback";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handleNotification(const std::string &data)
+{
+    if (database->addNotification(data))
+    {
+        return "STATUS_OK,Notification sent successfully";
+    }
+}
+
+std::string RequestHandler::handleGetNotifications(const std::string &data)
+{
+    int userId = std::stoi(data);
+    std::vector<Notification> notifications = database->getNonViewedNotificationsForUser(userId);
+
+    if (notifications.empty())
+    {
+        return "STATUS_OK,NO_NOTIFICATIONS";
+    }
+
+    return "STATUS_OK," + dataParser->serializeData(notifications);
+}
+
+std::string RequestHandler::handleMarkNotificationsViewed(const std::string &data)
+{
+    auto [userId, notificationIds] = dataParser->deserializeMarkNotificationsViewedRequest(data);
+
+    if (database->markNotificationsAsViewed(userId, notificationIds))
+    {
+        return "STATUS_OK,Notifications marked as viewed";
+    }
+    else
+    {
+        return "STATUS_ERROR,Failed to mark notifications as viewed";
+    }
+}
+
+std::string RequestHandler::handleUpdateProfile(const std::string &data)
+{
+    std::pair<bool, std::vector<std::string>> updateProfileParam = dataParser->deserializeData(data);
+
+    if (updateProfileParam.first)
+    {
+        UserProfile profile;
+        profile.userId = std::stoi(updateProfileParam.second[0]);
+        profile.preferenceType = updateProfileParam.second[1];
+        profile.spiceLevel = updateProfileParam.second[2];
+        profile.cuisinePreference = updateProfileParam.second[3];
+        profile.sweetTooth = updateProfileParam.second[4];
+
+        if (database->updateUserProfile(profile))
+        {
+            return "STATUS_OK,Profile updated successfully";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to update profile";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handleViewProfile(const std::string &data)
+{
+    int userId = std::stoi(data);
+
+    UserProfile userProfile = database->getUserProfile(userId);
+
+    std::string response = "STATUS_OK," +
+                           std::to_string(userProfile.userId) + "," +
+                           userProfile.preferenceType + "," +
+                           userProfile.spiceLevel + "," +
+                           userProfile.cuisinePreference + "," +
+                           userProfile.sweetTooth;
+
+    return response;
+}
+
+std::string RequestHandler::handleSetDailyMenuAvailabilityToZeroRequest(const std::string &data)
+{
+    std::pair<bool, std::vector<std::string>> setAvailabilityParam = dataParser->deserializeData(data);
+
+    if (setAvailabilityParam.first && setAvailabilityParam.second.size() == 1)
+    {
+        int dailyMenuId = std::stoi(setAvailabilityParam.second.at(0));
+
+        if (database->setDailyMenuAvailabilityToZero(dailyMenuId))
+        {
+            return "STATUS_OK,Daily menu availability set to zero";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to set daily menu availability to zero";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handleFetchFeedback(const std::string &data)
+{
+    std::string response = "STATUS_OK";
+    try
+    {
+        int menuId = std::stoi(data);
+
+        Menu menu;
+        menu.menuId = menuId;
+
+        database->fetchFeedbacks(menu);
+
+        for (auto &feedback : menu.feedbacks)
+        {
+            response += "|" + feedback.feedbackDate +
+                        "|" + std::to_string(feedback.rating) +
+                        "|" + feedback.comment;
+        }
+    }
+    catch (const std::invalid_argument &e)
+    {
+        response = "STATUS_ERROR";
+    }
+
+    return response;
+}
+
+std::string RequestHandler::handleAddFeedbackQuestion(const std::string &data)
+{
+    if (database->addFeedbackQuestion(data))
+    {
+        return "STATUS_OK,Feedback question added successfully";
+    }
+    else
+    {
+        return "STATUS_ERROR,Failed to add feedback question";
+    }
+}
+
+std::string RequestHandler::handleFetchFeedbackQuestions()
+{
+    auto questions = database->fetchFeedbackQuestions();
+
+    std::string response = "STATUS_OK";
+    for (const auto &question : questions)
+    {
+        response += "|" + std::to_string(question.first) + "|" + question.second;
+    }
+
+    return response;
+}
+
+std::string RequestHandler::handleUpdateFeedbackAnswer(const std::string &data)
+{
+    auto feedbackAnswerParams = dataParser->deserializeFeedbackAnswers(data);
+
+    if (feedbackAnswerParams.first)
+    {
+        if (database->storeFeedbackAnswers(feedbackAnswerParams.second))
+        {
+            return "STATUS_OK,Feedback answers updated successfully";
+        }
+        else
+        {
+            return "STATUS_ERROR,Failed to update feedback answers";
+        }
+    }
+    else
+    {
+        return "STATUS_ERROR,Invalid request format";
+    }
+}
+
+std::string RequestHandler::handlefetchSuggestionForMenu(const std::string &data)
+{
+    int menuId = std::stoi(data);
+
+    auto questions = database->fetchFeedbackQuestions();
+    std::vector<FeedbackAnswer> answers = database->fetchSuggestionsForMenu(menuId);
+
+    std::string response;
+    response += "Questions and Answers:\n";
+
+    for (const auto &question : questions)
+    {
+        response += "ID: " + std::to_string(question.first) + ", Question: " + question.second + "\n";
+
+        bool hasAnswers = false;
+        for (const auto &answer : answers)
+        {
+            if (answer.questionId == question.first)
+            {
+                response += "  Answer: " + answer.answerText + "\n";
+                hasAnswers = true;
+            }
+        }
+
+        if (!hasAnswers)
+        {
+            response += "  No answers yet.\n";
+        }
+    }
+
+    if (questions.empty())
+    {
+        response += "No questions found.\n";
+    }
+
+    return response;
+}
+
+std::string RequestHandler::handleGetDiscardedMenu()
+{
+    std::vector<Menu> discardedMenus = recommendationEngine->getDiscardedFood();
+
+    std::string response = "STATUS_OK";
+    for (const auto &menu : discardedMenus)
+    {
+        response += "," + std::to_string(menu.menuId) + "," + menu.menuName + "," + std::to_string(menu.price);
+    }
+
+    return response;
+}

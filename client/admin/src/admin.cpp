@@ -1,0 +1,227 @@
+#include "admin.h"
+#include <iostream>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <cstring>
+#include <iomanip>
+
+Admin::Admin(int id, const std::string &password, ServerConnection &serverConnection)
+    : id(id), password(password), role("admin"), serverConnection(serverConnection)
+{
+    userInputHandler = std::make_shared<UserInputHandler>();
+    dataParser = std::make_shared<DataParser>();
+}
+
+void Admin::mainMenu()
+{
+    int choice;
+    do
+    {
+        std::cout << "\n-------Main Menu---------\n";
+        std::cout << "\n1. Add User\n";
+        std::cout << "2. Delete User\n";
+        std::cout << "3. Add Menu Item\n";
+        std::cout << "4. Delete Menu Item\n";
+        std::cout << "5. view recommended Food\n";
+        std::cout << "6. view rolledout Menu\n";
+        std::cout << "7. Logout\n\n";
+        choice = userInputHandler->getIntInput("Enter your choice: ");
+
+        switch (choice)
+        {
+        case 1:
+            addUser();
+            break;
+        case 2:
+            deleteUser();
+            break;
+        case 3:
+            addMenu();
+            break;
+        case 4:
+            deleteMenu();
+            break;
+        case 5:
+            viewRecommendedmenu();
+            break;
+        case 6:
+            viewMenu();
+            break;
+        case 7:
+            std::cout << "Logging out...\n";
+            return;
+        default:
+            std::cout << "Invalid choice. Please try again.\n";
+        }
+    } while (choice != 7);
+}
+
+void Admin::addUser()
+{
+    int userId = userInputHandler->getIntInput("Enter user ID: ");
+    std::string username = userInputHandler->getStringInput("Enter username: ");
+    std::string password = userInputHandler->getStringInput("Enter password: ");
+    std::string role = userInputHandler->getStringInput("Select role: ");
+
+    std::string request = std::to_string((int)RequestType::ADD_USER) + "," + std::to_string(userId) + "," + username + "," + password + "," + role;
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Send request failed" << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+    std::cout << "Server response: " << response << std::endl;
+}
+
+void Admin::deleteUser()
+{
+    int userIdToDelet = userInputHandler->getIntInput("Enter user ID that you want to delete: ");
+
+    std::string request = std::to_string((int)RequestType::DELETE_USER) + "," + std::to_string(id) + "," + std::to_string(userIdToDelet);
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Send request failed" << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+
+    std::cout << "Server response: " << response << std::endl;
+}
+
+void Admin::addMenu()
+{
+    viewRecommendedmenu();
+    std::string menuName = userInputHandler->getStringInput("Enter menu name: ");
+    float menuPrice = userInputHandler->getIntInput("Enter cost: ");
+
+    std::vector<std::string> dietOptions = {"Vegetarian", "Non Vegetarian", "Eggetarian"};
+    std::vector<std::string> spiceOptions = {"High", "Medium", "Low", "None"};
+    std::vector<std::string> cuisineOptions = {"North Indian", "South Indian", "Other"};
+    std::vector<std::string> sweetOptions = {"Yes", "No"};
+
+    int dietChoice = userInputHandler->getChoiceInput("Select diet type:", dietOptions);
+    int spiceChoice = userInputHandler->getChoiceInput("Select spice level:", spiceOptions);
+    int cuisineChoice = userInputHandler->getChoiceInput("Select cuisine type:", cuisineOptions);
+    int sweetChoice = userInputHandler->getChoiceInput("Is it a sweet dish?", sweetOptions);
+
+    std::string dietType = dietOptions[dietChoice - 1];
+    std::string spiceLevel = spiceOptions[spiceChoice - 1];
+    std::string cuisineType = cuisineOptions[cuisineChoice - 1];
+    std::string sweetType = sweetOptions[sweetChoice - 1];
+
+    std::string request = std::to_string((int)RequestType::ADD_MENU) + "," + menuName + "," + std::to_string(menuPrice) + "," + dietType + "," + spiceLevel + "," + cuisineType + "," + sweetType;
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Send request failed" << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+    std::cout << "Server response: " << response << std::endl;
+}
+
+void Admin::deleteMenu()
+{
+    viewRecommendedmenu();
+    int menuid = userInputHandler->getIntInput("Enter menu ID to delete: ");
+    std::string request = std::to_string((int)RequestType::DELETE_MENU) + "," + std::to_string(menuid);
+
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Send request failed" << std::endl;
+        return;
+    }
+    std::string response = serverConnection.readResponse();
+
+    std::cout << "server response: " << response << std::endl;
+}
+
+void Admin::viewRecommendedmenu()
+{
+    std::string request = std::to_string((int)RequestType::GET_RECOMMENDED_FOOD);
+    if (!serverConnection.sendRequest(request))
+    {
+        std::cerr << "Failed to send request to server." << std::endl;
+        return;
+    }
+
+    std::string response = serverConnection.readResponse();
+    auto [status, recommendedFood] = dataParser->parseRecommendedFood(response);
+
+    if (status == "STATUS_OK")
+    {
+        std::cout << "--------------------- Menus ---------------------\n";
+        std::cout << "-------------------------------------------------\n";
+        std::cout << "| ID   | Name                      | Price       |\n";
+        std::cout << "-------------------------------------------------\n";
+
+        for (const auto &menu : recommendedFood)
+        {
+            std::cout << "| " << std::setw(4) << menu.menuId << " | "
+                      << std::setw(24) << std::left << menu.menuName.substr(0, 23) << " | "
+                      << std::setw(10) << std::fixed << std::setprecision(2) << menu.price << " |\n";
+        }
+
+        std::cout << "-------------------------------------------------\n";
+    }
+    else
+    {
+        std::cout << "Failed to get the food item " << status << "\n";
+    }
+}
+
+std::pair<std::string, std::vector<DailyMenuEntry>> Admin::fetchDailyMenu()
+{
+    std::string request = std::to_string((int)RequestType::GET_DAILY_MENU) + "," + std::to_string(id);
+    if (!serverConnection.sendRequest(request))
+    {
+        return {"Failed to send request to server.", {}};
+    }
+
+    std::string response = serverConnection.readResponse();
+    auto [status, dailyMenu] = dataParser->deserializeToDailyMenuEntries(response);
+
+    return {status, dailyMenu};
+}
+
+std::vector<DailyMenuEntry> Admin::viewMenu()
+{
+    auto [status, dailyMenu] = fetchDailyMenu();
+
+    if (status == "STATUS_OK")
+    {
+        printDailyMenu(dailyMenu);
+    }
+    else
+    {
+        std::cout << "Failed to get the daily menu items: " << status << "\n";
+    }
+
+    return dailyMenu;
+}
+
+void Admin::printDailyMenu(const std::vector<DailyMenuEntry> &dailyMenu)
+{
+    std::cout << "----- Daily Menu ------\n";
+    std::cout << "------------------------------------------------------------------\n";
+    std::cout << "| ID   | Name                | Availability | Category   | Price  |\n";
+    std::cout << "------------------------------------------------------------------\n";
+
+    for (const auto &menu : dailyMenu)
+    {
+        std::cout << "| "
+                  << std::setw(4) << menu.dailyMenuId << " | "
+                  << std::setw(19) << menu.itemName << " | "
+                  << std::setw(12) << menu.availability << " | "
+                  << std::setw(10) << menu.mealCategory << " | "
+                  << std::setw(6) << std::fixed << std::setprecision(2) << menu.price << " |\n";
+    }
+
+    std::cout << "------------------------------------------------------------------\n";
+}

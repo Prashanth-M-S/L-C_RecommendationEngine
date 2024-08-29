@@ -1,0 +1,198 @@
+#include "dataParser.h"
+#include <sstream>
+#include <iostream>
+
+std::pair<std::string, std::vector<RecommendedMenuData>> DataParser::parseRecommendedFood(const std::string &data)
+{
+    std::istringstream iss(data);
+    std::string statusCode;
+    std::getline(iss, statusCode, ',');
+
+    std::vector<RecommendedMenuData> recommendedFood;
+    std::string menuData;
+
+    while (std::getline(iss, menuData, ','))
+    {
+        try
+        {
+            int menuId = std::stoi(menuData);
+
+            std::string menuName;
+            if (!std::getline(iss, menuName, ','))
+            {
+                throw std::runtime_error("Missing menu name");
+            }
+
+            std::string priceStr;
+            if (!std::getline(iss, priceStr, ','))
+            {
+                throw std::runtime_error("Missing price");
+            }
+
+            float price = std::stof(priceStr);
+
+            std::string recommendationScoreStr;
+            if (!std::getline(iss, recommendationScoreStr, ','))
+            {
+                throw std::runtime_error("Missing recommendation score");
+            }
+
+            float recommendationScore = std::stof(recommendationScoreStr);
+
+            recommendedFood.push_back({menuId, menuName, price, recommendationScore});
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error parsing menu data: " << e.what() << std::endl;
+            return {statusCode, {}};
+        }
+    }
+
+    return {statusCode, recommendedFood};
+}
+
+std::pair<bool, std::vector<std::string>> DataParser::deserializeData(const std::string &data)
+{
+    std::istringstream iss(data);
+    std::string item;
+    std::vector<std::string> tokens;
+
+    while (getline(iss, item, ','))
+    {
+        tokens.push_back(item);
+    }
+
+    return {true, tokens};
+}
+
+std::pair<std::string, std::vector<DailyMenuEntry>> DataParser::deserializeToDailyMenuEntries(const std::string &data)
+{
+    std::vector<DailyMenuEntry> items;
+    std::istringstream iss(data);
+    std::string token;
+    std::string statusCode;
+    std::getline(iss, statusCode, ',');
+
+    if (statusCode != "STATUS_OK")
+    {
+        items.clear();
+    }
+    else
+    {
+        while (getline(iss, token, ','))
+        {
+            DailyMenuEntry entry;
+            entry.dailyMenuId = std::stoi(token);
+
+            getline(iss, token, ',');
+            entry.itemName = token;
+
+            getline(iss, token, ',');
+            entry.availability = std::stoi(token);
+
+            getline(iss, token, ',');
+            entry.mealCategory = token;
+
+            getline(iss, token, ',');
+            entry.price = std::stod(token);
+
+            items.push_back(entry);
+        }
+    }
+
+    return {statusCode, items};
+}
+
+std::pair<std::string, std::vector<Notification>> DataParser::deserializeNotifications(const std::string &data)
+{
+    std::pair<std::string, std::vector<Notification>> result;
+    std::istringstream ss(data);
+    std::string status;
+    std::getline(ss, status, ',');
+
+    result.first = status;
+
+    std::string item;
+    try
+    {
+        while (std::getline(ss, item, ';'))
+        {
+            Notification notification;
+            std::istringstream itemStream(item);
+            std::string field;
+
+            std::getline(itemStream, field, ',');
+            notification.notificationId = std::stoi(field);
+            std::getline(itemStream, field, ',');
+            notification.message = field;
+            std::getline(itemStream, field, ',');
+            notification.dateUpdated = field;
+
+            result.second.push_back(notification);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        result.second.clear();
+    }
+
+    return result;
+}
+
+std::pair<std::string, UserProfile> DataParser::deserializeUserProfile(const std::string &data)
+{
+    std::istringstream ss(data);
+    std::string status;
+    std::getline(ss, status, ',');
+
+    UserProfile userProfile;
+    if (status == "STATUS_OK")
+    {
+        std::string token;
+
+        std::getline(ss, token, ',');
+        userProfile.userId = std::stoi(token);
+        std::getline(ss, token, ',');
+        userProfile.preferenceType = token;
+        std::getline(ss, token, ',');
+        userProfile.spiceLevel = token;
+        std::getline(ss, token, ',');
+        userProfile.cuisinePreference = token;
+        std::getline(ss, token, ',');
+        userProfile.sweetTooth = token;
+    }
+
+    return {status, userProfile};
+}
+
+std::pair<std::string, std::vector<Menu>> DataParser::deserializeMenu(const std::string &data)
+{
+    std::istringstream ss(data);
+    std::string status;
+    std::getline(ss, status, ',');
+
+    std::vector<Menu> menus;
+    if (status == "STATUS_OK")
+    {
+        while (ss)
+        {
+            Menu menu;
+            std::string menuIdStr, priceStr;
+
+            if (!std::getline(ss, menuIdStr, ','))
+                break;
+            menu.menuId = std::stoi(menuIdStr);
+
+            if (!std::getline(ss, menu.menuName, ','))
+                break;
+
+            if (!std::getline(ss, priceStr, ','))
+                break;
+            menu.price = std::stof(priceStr);
+
+            menus.push_back(menu);
+        }
+    }
+
+    return std::make_pair(status, menus);
+}
